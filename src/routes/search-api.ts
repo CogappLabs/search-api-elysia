@@ -260,7 +260,11 @@ export function searchApiRoutes(
           : null;
         if (cache && cacheKey) {
           const cached = await cache.get<SearchResult>(cacheKey);
-          if (cached) return cached;
+          if (cached) {
+            set.headers["Cache-Control"] =
+              "public, max-age=10, stale-while-revalidate=50";
+            return cached;
+          }
         }
 
         const searchResult = await engine.search(query.q ?? "", options);
