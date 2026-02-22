@@ -59,7 +59,7 @@ Check the health endpoint:
 
 ```bash
 curl https://search-api-elysia-production.up.railway.app/health
-# {"status":"ok"}
+# {"status":"ok","cache":"disabled"}
 ```
 
 List configured indexes:
@@ -81,3 +81,4 @@ curl "https://search-api-elysia-production.up.railway.app/my_index/search?q=hell
 - [Search endpoint](/reference/search/) — all query parameters
 - [Filters](/features/filters/) — filter types and usage
 - [Field aliases](/features/field-aliases/) — rename fields for consumers
+- [Caching](/features/caching/) — Redis caching and compression

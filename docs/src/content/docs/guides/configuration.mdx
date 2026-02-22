@@ -29,6 +29,15 @@ The server will exit with an error if a referenced variable is not set.
 
 When `apiKey` is set (or the `API_KEY` env var exists), all requests except `/health` and `/openapi*` require a `Authorization: Bearer <token>` header.
 
+## Environment variables
+
+These environment variables are read directly (not from `config.yaml`):
+
+| Variable    | Description                                                    |
+| ----------- | -------------------------------------------------------------- |
+| `API_KEY`   | Bearer token for API auth (alternative to `apiKey` in config)  |
+| `REDIS_URL` | Redis connection URL to enable response caching. See [Caching](/features/caching/). |
+
 ## Index configuration
 
 Each key under `indexes` becomes the URL handle for that index's endpoints.

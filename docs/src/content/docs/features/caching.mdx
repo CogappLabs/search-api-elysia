@@ -1,0 +1,69 @@
+---
+title: Caching
+description: Optional Redis response caching with Cache-Control headers.
+---
+
+The API supports optional Redis caching to reduce load on your search engine and improve response times for repeated queries.
+
+## Enabling Redis cache
+
+Set the `REDIS_URL` environment variable to enable caching:
+
+```bash
+REDIS_URL=redis://default:password@redis.example.com:6379
+```
+
+When `REDIS_URL` is not set, the API works exactly as before with no caching layer. No code changes or config file edits are needed.
+
+The `/health` endpoint reports cache status:
+
+```json
+{"status":"ok","cache":"connected"}
+```
+
+Possible values: `"connected"`, `"error"`, or `"disabled"`.
+
+## What gets cached
+
+| Endpoint | Cache key pattern | Redis TTL | Cache-Control |
+|----------|------------------|-----------|---------------|
+| `/:handle/search` | `v1:search:{handle}:{hash}` | 60s | `max-age=10, stale-while-revalidate=50` |
+| `/:handle/mapping` | `v1:mapping:{handle}` | 1 hour | `max-age=300, stale-while-revalidate=3300` |
+
+Search cache keys are built from a SHA-256 hash of the normalized query parameters (query text, page, perPage, sort, filters, facets, etc.) **after** field alias translation. This means identical queries always produce the same cache key regardless of parameter order.
+
+## Cache-Control headers
+
+All search and mapping responses include `Cache-Control` headers, enabling layered caching:
+
+1. **Browser cache** — serves cached responses instantly for `max-age` seconds
+2. **CDN cache** — if you put a CDN in front of the API, it respects these headers too
+3. **Redis cache** — protects your search engine from repeated queries
+4. **Search engine** — only hit when all cache layers miss
+
+These headers are sent whether Redis is enabled or not.
+
+## Cache version prefix
+
+All cache keys are prefixed with a version string (e.g. `v1:`). To instantly invalidate all cached data without flushing Redis, bump the `CACHE_VERSION` constant in `src/cache.ts`:
+
+```typescript
+export const CACHE_VERSION = "v2"; // was "v1"
+```
+
+Old keys expire naturally via their TTL. New requests immediately use fresh keys.
+
+## Clearing the cache
+
+Flush all cached keys via the API:
+
+```bash
+curl -X POST https://your-api.com/cache/clear \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Returns `{"cleared":true}`. This endpoint is protected by the same bearer token auth as other endpoints.
+
+## Response compression
+
+All JSON responses are gzip-compressed when the client sends an `Accept-Encoding: gzip` header (which browsers and most HTTP clients do by default). This typically reduces response sizes by 70-80%.

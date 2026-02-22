@@ -108,6 +108,21 @@ const app = new Elysia()
       return httpStatus(401, { error: "Unauthorized" });
     }
   })
+  .mapResponse(({ response, headers, set }) => {
+    const accept = headers["accept-encoding"] ?? "";
+    if (!accept.includes("gzip")) return;
+    if (response instanceof Response) return;
+
+    const text =
+      typeof response === "object"
+        ? JSON.stringify(response)
+        : String(response ?? "");
+
+    set.headers["Content-Encoding"] = "gzip";
+    set.headers["Content-Type"] = "application/json; charset=utf-8";
+
+    return new Response(Bun.gzipSync(new TextEncoder().encode(text)));
+  })
   .onError(({ error, set }) => {
     console.error(error);
     set.status = 500;
