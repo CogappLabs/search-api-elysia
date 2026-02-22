@@ -13,6 +13,8 @@ Install the Search API package and Eden Treaty in your TypeScript project:
 bun add github:CogappLabs/search-api-elysia @elysiajs/eden
 ```
 
+The package is installed as `search-api-bun` (the npm package name), so imports use that name.
+
 ## Creating a client
 
 Import the `App` type and create a typed client pointing at your API:
@@ -237,5 +239,5 @@ console.log(data?.status, data?.cache);
 
 ## Requirements
 
-- TypeScript project with `moduleResolution` set to `bundler` or `nodenext`
+- TypeScript project with `moduleResolution` set to `bundler`
 - Bun or Node.js 18+ runtime
