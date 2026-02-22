@@ -35,14 +35,11 @@ Full-text search with pagination, facets, filters, sorting, highlighting, histog
 
 All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `highlight`, `histogram`, `geoGrid.field`) support [field aliases](../../features/field-aliases/) when configured.
 
-### Boost precedence
+### Which fields get searched
 
-When the search runs, field boosting is resolved in this order:
+Field weights are normally set in config via `fields` with `weight` — these are applied automatically on every search. The `boosts` query param exists as an override: if a request passes `boosts`, the config weights are ignored for that request.
 
-1. **Query-time `boosts` param** — if provided, used exclusively (config boosts are ignored)
-2. **Config `fields` with `weight`** — used when no query-time boosts are provided
-3. **Config `fields` with `searchable: true`** — used when no boosts exist at all
-4. **All fields (`*`)** — the default when nothing is configured
+When no boosts are configured at all, the API falls back to fields marked `searchable: true`, then to all fields (`*`).
 
 See [Configuration](../../guides/configuration/#fields) for setting up field weights.
 
