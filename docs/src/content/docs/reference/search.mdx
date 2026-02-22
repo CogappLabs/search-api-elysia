@@ -3,7 +3,7 @@ title: Search
 description: Full-text search endpoint with pagination, facets, filters, sorting, and more.
 ---
 
-import { Badge } from "@astrojs/starlight/components";
+import { Badge, Aside } from "@astrojs/starlight/components";
 import SearchDemo from "@/components/SearchDemo.tsx";
 
 ## Try it
@@ -26,16 +26,32 @@ Full-text search with pagination, facets, filters, sorting, highlighting, histog
 | `sort`      | `json`   | —                | Sort order. JSON object mapping field names to `"asc"` or `"desc"`. |
 | `facets`    | `string` | config default   | Comma-separated list of fields to aggregate as facets.         |
 | `filters`   | `json`   | —                | Field filters. See [Filters](../../features/filters/).              |
-| `highlight` | `string` | config default   | `"true"` to return highlighted fragments with `<mark>` tags.  |
+| `highlight` | `string` | config default   | `"true"` to highlight all fields, or a comma-separated list of field names to highlight selectively (e.g. `"title,description"`).  |
 | `fields`    | `string` | all fields       | Comma-separated list of fields to return.                      |
 | `suggest`   | `string` | —                | `"true"` to enable phrase suggestions (requires `suggestField` in config). <Badge text="ES/OS only" variant="note" /> |
 | `boosts`    | `json`   | config default   | Field boost weights. JSON object mapping field names to numbers. <Badge text="ES/OS only" variant="note" /> |
 | `histogram` | `json`   | —                | Histogram intervals. See [Histograms](../../features/histograms/). <Badge text="ES/OS only" variant="note" /> |
 | `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](../../features/geo-map/). <Badge text="ES/OS only" variant="note" /> |
 
-When no `boosts` are provided (via query param or config), the search uses all fields by default. Use `fields` in the index config with `weight` or `searchable: true` to control which fields are searched. See [Configuration](../../guides/configuration/#fields).
+All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `highlight`, `histogram`, `geoGrid.field`) support [field aliases](../../features/field-aliases/) when configured.
 
-All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `histogram`, `geoGrid.field`) support [field aliases](../../features/field-aliases/) when configured.
+### Which fields get searched
+
+Field weights are normally set in config via `fields` with `weight` — these are applied automatically on every search. The `boosts` query param exists as an override: if a request passes `boosts`, the config weights are ignored for that request.
+
+When no boosts are configured at all, the API falls back to fields marked `searchable: true`, then to all fields (`*`).
+
+See [Configuration](../../guides/configuration/#fields) for setting up field weights.
+
+### Sort field resolution
+
+<Aside>
+**ES/OS only** — when you sort on a `text` field that has a `.keyword` sub-field, the API automatically resolves to `field.keyword`. You can pass `{"title":"asc"}` without worrying about the underlying Elasticsearch mapping.
+</Aside>
+
+### Phrase suggestions
+
+When `suggest=true` is set and a `suggestField` is configured for the index, the API returns phrase-level corrections in the `suggestions` array. The suggest field should have a [shingle analyzer](https://www.elastic.co/docs/reference/text-analysis/analysis-shingle-tokenfilter) configured in your Elasticsearch mapping for best results. Suggestions are only generated when the search query is non-empty.
 
 ## Response
 

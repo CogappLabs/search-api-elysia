@@ -15,6 +15,17 @@ hero:
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
+## Why an API layer?
+
+Talking directly to Elasticsearch (or OpenSearch, or Meilisearch) from a frontend means every project needs to learn the query DSL, handle auth, shape responses, and deal with engine-specific quirks. A thin API layer in between solves this:
+
+- **Common interface across projects** — define an index in YAML and every project gets the same REST endpoints with the same response shapes, regardless of which engine sits behind it.
+- **No search-engine expertise required** — frontend developers call simple query-string endpoints (`?q=&filters=`) instead of constructing Elasticsearch JSON queries. Facets, sorting, highlighting, and pagination just work.
+- **Easy frontend wiring** — the API returns a flat, predictable JSON format designed for UI consumption. InstantSearch.js, custom React components, or a plain `fetch` call all plug in with minimal glue code.
+- **Security** — credentials and cluster URLs stay on the server. Clients never touch the search engine directly, so there's no risk of exposing internal mappings or allowing unrestricted queries.
+- **Swap engines without changing clients** — migrating from Elasticsearch to OpenSearch or Meilisearch is a config change. Consumer code doesn't need to know or care.
+- **Field aliases** — expose clean, consumer-friendly names (`title`, `date`) while the underlying engine keeps its own mapping (`dc.title.keyword`, `dateCreated`). Translation is automatic.
+
 ## Features
 
 <CardGrid>

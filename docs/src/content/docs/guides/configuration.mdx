@@ -21,6 +21,12 @@ indexes:
 
 The server will exit with an error if a referenced variable is not set.
 
+Use `${VAR_NAME:-default}` to provide a fallback value when the variable is unset:
+
+```yaml
+port: ${PORT:-3000}
+```
+
 ## Top-level settings
 
 | Setting       | Type       | Default | Description                                    |
@@ -120,7 +126,7 @@ indexes:
 | `perPage`      | `number`                   | Default results per page (overridden by query)    |
 | `facets`       | `string[]`                 | Default facet fields returned with every search   |
 | `highlight`    | `boolean`                  | Enable highlighting by default                    |
-| `suggestField` | `string`                   | ES field for phrase suggestions                   |
+| `suggestField` | `string`                   | Field for phrase suggestions. Should have a [shingle analyzer](https://www.elastic.co/docs/reference/text-analysis/analysis-shingle-tokenfilter) configured in your ES mapping. <br/> See [Search — Phrase suggestions](../../reference/search/#phrase-suggestions). |
 
 ## Fields
 

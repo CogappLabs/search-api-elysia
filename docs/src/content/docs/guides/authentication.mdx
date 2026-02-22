@@ -1,0 +1,55 @@
+---
+title: Authentication
+description: Optional bearer token authentication for the API.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Authentication is entirely optional. When no API key is configured, all endpoints are open. This is fine for internal or development use — add a key when you're ready to restrict access.
+
+## Enabling authentication
+
+Set an API key in one of two ways:
+
+**In `config.yaml`:**
+
+```yaml
+apiKey: ${API_KEY}
+```
+
+**Or via environment variable only:**
+
+```bash
+API_KEY=my-secret-token bun run start
+```
+
+If both are set, the config file value takes priority.
+
+## Making authenticated requests
+
+Include the key as a `Bearer` token in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer my-secret-token" \
+  http://localhost:3000/my_index/search?q=hello
+```
+
+Requests without a valid token receive a `401 Unauthorized` response:
+
+```json
+{ "error": "Unauthorized" }
+```
+
+## Public endpoints
+
+These endpoints are always accessible, even when authentication is enabled:
+
+| Endpoint       | Description                     |
+| -------------- | ------------------------------- |
+| `GET /health`  | Health check and cache status   |
+| `GET /openapi` | Interactive Swagger UI          |
+| `GET /openapi/json` | OpenAPI JSON specification |
+
+<Aside>
+If you don't need authentication at all, simply omit `apiKey` from your config and leave `API_KEY` unset. The API will serve all endpoints without any auth checks.
+</Aside>

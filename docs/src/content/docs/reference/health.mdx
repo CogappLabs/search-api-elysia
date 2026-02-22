@@ -1,0 +1,36 @@
+---
+title: Health
+description: Health check endpoint for monitoring API and cache status.
+---
+
+```
+GET /health
+```
+
+Returns the API status and Redis cache connection state. This endpoint is always accessible, even when [authentication](../../guides/authentication/) is enabled.
+
+## Response
+
+```json
+{ "status": "ok", "cache": "connected" }
+```
+
+| Field    | Type     | Description                          |
+| -------- | -------- | ------------------------------------ |
+| `status` | `string` | Always `"ok"` when the API is running. |
+| `cache`  | `string` | Redis cache state (see below).       |
+
+### Cache states
+
+| Value         | Meaning                                    |
+| ------------- | ------------------------------------------ |
+| `"connected"` | Redis is configured and connected.         |
+| `"error"`     | Redis is configured but the connection failed. |
+| `"disabled"`  | No `REDIS_URL` set — caching is off.       |
+
+## Example
+
+```bash
+curl http://localhost:3000/health
+# {"status":"ok","cache":"disabled"}
+```
