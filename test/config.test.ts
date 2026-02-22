@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.ts";
 import { createEngine } from "../src/engines/index.ts";
-import { deriveFromFields } from "../src/index.ts";
+import { deriveFromFields } from "../src/fields.ts";
 import type { IndexConfig } from "../src/types.ts";
 
 function writeTempConfig(content: string): string {

@@ -7,42 +7,14 @@ import { loadConfig } from "./config.ts";
 import type { SearchEngine } from "./engines/engine.ts";
 import { createEngine } from "./engines/index.ts";
 import { FieldAliasMap } from "./field-aliases.ts";
+import { deriveFromFields } from "./fields.ts";
+
+export { deriveFromFields } from "./fields.ts";
+
 import { indexesRoute } from "./routes/indexes.ts";
 import { instantSearchRoutes } from "./routes/instantsearch.ts";
 import { searchApiRoutes } from "./routes/search-api.ts";
-import type { AppConfig, FieldConfig, IndexConfig } from "./types.ts";
-
-export function deriveFromFields(fields?: Record<string, FieldConfig>) {
-  const aliases: Record<string, string> = {};
-  const boosts: Record<string, number> = {};
-  const searchableFields: string[] = [];
-
-  if (!fields) return { aliases, boosts, searchableFields };
-
-  const seenEsFields = new Map<string, string>();
-  for (const [name, cfg] of Object.entries(fields)) {
-    const esName = cfg.esField ?? name;
-
-    if (cfg.esField) {
-      const existing = seenEsFields.get(cfg.esField);
-      if (existing) {
-        throw new Error(
-          `Fields "${existing}" and "${name}" both map to ES field "${cfg.esField}"`,
-        );
-      }
-      seenEsFields.set(cfg.esField, name);
-      aliases[name] = cfg.esField;
-    }
-
-    if (cfg.weight !== undefined) {
-      boosts[esName] = cfg.weight;
-    } else if (cfg.searchable) {
-      searchableFields.push(esName);
-    }
-  }
-
-  return { aliases, boosts, searchableFields };
-}
+import type { AppConfig, IndexConfig } from "./types.ts";
 
 let config: AppConfig;
 try {
