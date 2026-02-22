@@ -1,5 +1,8 @@
 import { RedisClient } from "bun";
 
+/** Bump to instantly invalidate all cached keys. */
+export const CACHE_VERSION = "v1";
+
 export interface Cache {
   get<T>(key: string): Promise<T | null>;
   set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
@@ -83,5 +86,5 @@ export function buildSearchCacheKey(
 ): string {
   const canonical = stableStringify({ q, ...options });
   const hash = new Bun.CryptoHasher("sha256").update(canonical).digest("hex");
-  return `search:${handle}:${hash}`;
+  return `${CACHE_VERSION}:search:${handle}:${hash}`;
 }

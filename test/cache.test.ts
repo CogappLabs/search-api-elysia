@@ -14,9 +14,9 @@ describe("buildSearchCacheKey", () => {
     expect(key1).toBe(key2);
   });
 
-  it("starts with search:{handle}:", () => {
+  it("starts with version prefix", () => {
     const key = buildSearchCacheKey("my_index", "castle", {});
-    expect(key).toStartWith("search:my_index:");
+    expect(key).toStartWith("v1:search:my_index:");
   });
 
   it("produces different keys for different queries", () => {

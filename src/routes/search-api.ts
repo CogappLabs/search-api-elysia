@@ -1,6 +1,5 @@
 import { Elysia, status, t } from "elysia";
-import type { Cache } from "../cache.ts";
-import { buildSearchCacheKey } from "../cache.ts";
+import { buildSearchCacheKey, CACHE_VERSION, type Cache } from "../cache.ts";
 import type { SearchEngine } from "../engines/engine.ts";
 import { FieldAliasMap } from "../field-aliases.ts";
 import type { IndexConfig, SearchOptions, SearchResult } from "../types.ts";
@@ -138,6 +137,7 @@ export function searchApiRoutes(
         configSearchableFields,
         params,
         query,
+        set,
       }) => {
         if (!engine || !indexConfig) {
           return status(404, {
@@ -291,6 +291,8 @@ export function searchApiRoutes(
           cache.set(cacheKey, searchResult, 60);
         }
 
+        set.headers["Cache-Control"] =
+          "public, max-age=10, stale-while-revalidate=50";
         return searchResult;
       },
       {
@@ -592,18 +594,22 @@ export function searchApiRoutes(
     )
     .get(
       "/:handle/mapping",
-      async ({ engine, params }) => {
+      async ({ engine, params, set }) => {
         if (!engine) {
           return status(404, {
             error: `Index "${params.handle}" not found`,
           });
         }
 
-        const mappingCacheKey = `mapping:${params.handle}`;
+        const mappingCacheKey = `${CACHE_VERSION}:mapping:${params.handle}`;
         if (cache) {
           const cached =
             await cache.get<Record<string, unknown>>(mappingCacheKey);
-          if (cached) return cached;
+          if (cached) {
+            set.headers["Cache-Control"] =
+              "public, max-age=300, stale-while-revalidate=3300";
+            return cached;
+          }
         }
 
         const mapping = await engine.getMapping();
@@ -612,6 +618,8 @@ export function searchApiRoutes(
           cache.set(mappingCacheKey, mapping, 3600);
         }
 
+        set.headers["Cache-Control"] =
+          "public, max-age=300, stale-while-revalidate=3300";
         return mapping;
       },
       {
