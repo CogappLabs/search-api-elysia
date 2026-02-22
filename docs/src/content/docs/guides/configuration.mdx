@@ -1,0 +1,169 @@
+---
+title: Configuration
+description: Config file format, environment variables, index settings, and field configuration.
+---
+
+The API is configured through a `config.yaml` file in the project root. A JSON Schema is available at `schemas/config.schema.json` for editor autocompletion.
+
+## Environment variable interpolation
+
+Reference environment variables anywhere in the config with `${VAR_NAME}` syntax:
+
+```yaml
+apiKey: ${API_KEY}
+indexes:
+  my_index:
+    host: ${ES_HOST}
+    apiKey: ${ES_API_KEY}
+```
+
+The server will exit with an error if a referenced variable is not set.
+
+## Top-level settings
+
+| Setting       | Type       | Default | Description                                    |
+| ------------- | ---------- | ------- | ---------------------------------------------- |
+| `port`        | `number`   | `3000`  | Server listen port                             |
+| `apiKey`      | `string?`  | —       | Bearer token for API authentication            |
+| `corsOrigins` | `string[]?`| —       | Allowed CORS origins (omit to disable CORS)    |
+
+When `apiKey` is set (or the `API_KEY` env var exists), all requests except `/health` and `/openapi*` require a `Authorization: Bearer <token>` header.
+
+## Index configuration
+
+Each key under `indexes` becomes the URL handle for that index's endpoints.
+
+```yaml
+indexes:
+  collections:
+    engine: elasticsearch
+    host: https://elasticsearch.example.com
+    apiKey: ${ES_API_KEY}
+    indexName: museum_collections
+```
+
+| Setting     | Type                 | Required | Description                              |
+| ----------- | -------------------- | -------- | ---------------------------------------- |
+| `engine`    | `"elasticsearch"`    | Yes      | Search engine type                       |
+| `host`      | `string`             | Yes      | Elasticsearch host URL                   |
+| `apiKey`    | `string?`            | No       | ES API key (use this or username/password)|
+| `username`  | `string?`            | No       | ES basic auth username                   |
+| `password`  | `string?`            | No       | ES basic auth password                   |
+| `indexName` | `string \| string[]` | Yes      | ES index name(s)                         |
+
+### Multi-index search
+
+Pass an array to `indexName` to search across multiple Elasticsearch indexes with a single handle. Results are unified and relevance-ranked. Each hit includes an `_index` field identifying its source.
+
+```yaml
+indexes:
+  all_content:
+    engine: elasticsearch
+    host: https://elasticsearch.example.com
+    indexName:
+      - museum_collections
+      - library_catalogue
+```
+
+## Index defaults
+
+Optional defaults applied when query parameters are omitted:
+
+```yaml
+indexes:
+  collections:
+    # ...
+    defaults:
+      perPage: 20
+      facets:
+        - category
+        - period
+      highlight: true
+      suggestField: title
+```
+
+| Setting        | Type                       | Description                                      |
+| -------------- | -------------------------- | ------------------------------------------------ |
+| `perPage`      | `number`                   | Default results per page (overridden by query)    |
+| `facets`       | `string[]`                 | Default facet fields returned with every search   |
+| `highlight`    | `boolean`                  | Enable highlighting by default                    |
+| `suggestField` | `string`                   | ES field for phrase suggestions                   |
+
+## Fields
+
+The `fields` config provides a unified way to configure field boost weights, searchability, and field name aliases. Define it at the index level:
+
+```yaml
+indexes:
+  collections:
+    # ...
+    fields:
+      title:
+        weight: 10
+      description:
+        weight: 2
+      body:
+        searchable: true
+      country:
+        esField: placeCountry
+      region:
+        esField: placeRegion
+```
+
+| Property     | Type      | Description                                                                 |
+| ------------ | --------- | --------------------------------------------------------------------------- |
+| `weight`     | `number?` | Boost weight for relevance scoring. Implies the field is searchable.        |
+| `searchable` | `boolean?`| Include in search queries without boosting. Only applies when `weight` is not set. |
+| `esField`    | `string?` | Maps this key as a consumer-friendly alias to the real ES field name.       |
+
+### How field properties interact
+
+- **`weight`** — The field gets a boost multiplier in relevance scoring. This implicitly makes it searchable; you don't need to also set `searchable: true`.
+- **`searchable: true`** (without `weight`) — The field is included in search queries at default relevance. Useful for fields you want to search but don't want to boost.
+- **`esField`** — The key acts as an alias. API consumers use the alias; the API translates to the real ES field name automatically and bidirectionally.
+- **No `fields` config** — All fields are searched with default relevance (equivalent to `["*"]`).
+
+### Field aliases via `esField`
+
+When `esField` is set, the key acts as a consumer-friendly alias. Translation is automatic and bidirectional — use aliases in query parameters and they appear in responses.
+
+See [Field Aliases](/features/field-aliases/) for details on which parameters support aliases.
+
+## Full example
+
+```yaml
+port: 3000
+apiKey: ${API_KEY}
+corsOrigins:
+  - https://example.com
+  - https://app.example.com
+
+indexes:
+  collections:
+    engine: elasticsearch
+    host: ${ES_HOST}
+    apiKey: ${ES_API_KEY}
+    indexName: museum_collections
+    defaults:
+      perPage: 20
+      facets:
+        - category
+        - period
+      highlight: true
+      suggestField: title
+    fields:
+      title:
+        weight: 10
+      description:
+        weight: 2
+      country:
+        esField: placeCountry
+      region:
+        esField: placeRegion
+
+  catalogue:
+    engine: elasticsearch
+    host: ${ES_HOST}
+    apiKey: ${ES_API_KEY}
+    indexName: library_catalogue
+```

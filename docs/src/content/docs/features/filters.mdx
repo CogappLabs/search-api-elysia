@@ -1,0 +1,84 @@
+---
+title: Filters
+description: Filter search results by string, array, boolean, and range values.
+---
+
+Filters narrow search results to documents matching specific field values. Pass them as a JSON object in the `filters` query parameter on the [search endpoint](/reference/search/).
+
+## Filter types
+
+### String filter
+
+Match documents where a field equals a specific value:
+
+```bash
+curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%22Scotland%22%7D"
+```
+
+```json title="filters decoded"
+{ "country": "Scotland" }
+```
+
+### Array filter
+
+Match documents where a field equals any of the given values (OR logic):
+
+```bash
+curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%5B%22Scotland%22%2C%22Wales%22%5D%7D"
+```
+
+```json title="filters decoded"
+{ "country": ["Scotland", "Wales"] }
+```
+
+### Boolean filter
+
+Match documents where a boolean field is `true` or `false`:
+
+```bash
+curl "http://localhost:3000/collections/search?q=&filters=%7B%22hasImage%22%3Atrue%7D"
+```
+
+```json title="filters decoded"
+{ "hasImage": true }
+```
+
+### Range filter
+
+Match documents where a numeric field falls within a range. Both `min` and `max` are optional:
+
+```bash
+curl "http://localhost:3000/collections/search?q=&filters=%7B%22population%22%3A%7B%22min%22%3A10000%2C%22max%22%3A500000%7D%7D"
+```
+
+```json title="filters decoded"
+{ "population": { "min": 10000, "max": 500000 } }
+```
+
+You can use just `min` or just `max` for open-ended ranges:
+
+```json
+{ "elevation": { "min": 1000 } }
+```
+
+## Combining filters
+
+Multiple filters can be combined in a single object. All filters are applied with AND logic:
+
+```json
+{
+  "country": "Scotland",
+  "hasImage": true,
+  "population": { "min": 5000 }
+}
+```
+
+## Filters and facets
+
+When both `filters` and `facets` are used in the same search request, filters on fields that are also requested as facets are applied as a `post_filter` in Elasticsearch. This means facet counts for those fields reflect the **unfiltered** result set, which is typically what you want for a faceted search UI — users can see how many results exist for other filter values.
+
+Filters on fields that are **not** in the facets list are applied as regular query filters and will affect both the results and all facet counts.
+
+## Facet endpoint limitations
+
+The [facets endpoint](/reference/facets/) only supports string and string array filters. Boolean and range filters are only available on the [search endpoint](/reference/search/).

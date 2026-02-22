@@ -1,0 +1,50 @@
+---
+title: Documents
+description: Retrieve a single document by its ID.
+---
+
+import DocumentDemo from "@/components/DocumentDemo.tsx";
+
+## Try it
+
+<DocumentDemo client:only="react" />
+
+```
+GET /:handle/documents/:id
+```
+
+Retrieve a single document by its ID. Returns all indexed fields.
+
+## Path parameters
+
+| Parameter | Type     | Description                              |
+| --------- | -------- | ---------------------------------------- |
+| `handle`  | `string` | Index handle as configured in config.yaml |
+| `id`      | `string` | Document ID (`objectID`)                 |
+
+## Response
+
+Returns the full document as a JSON object with all indexed fields:
+
+```json
+{
+  "objectID": "498",
+  "title": "Stirling Castle",
+  "description": "A medieval castle in Stirling, Scotland.",
+  "country": "Scotland",
+  "coordinates": { "lat": 56.124, "lon": -3.947 }
+}
+```
+
+## Examples
+
+```bash
+curl "http://localhost:3000/collections/documents/498"
+```
+
+## Error responses
+
+| Status | Condition              |
+| ------ | ---------------------- |
+| `401`  | Missing or invalid bearer token |
+| `404`  | Index handle or document not found |

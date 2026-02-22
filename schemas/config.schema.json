@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Search API Configuration",
+  "description": "Configuration file for the Bun + Elysia search API. Provides a unified REST interface over external search engine indexes.",
+  "type": "object",
+  "properties": {
+    "port": {
+      "type": "integer",
+      "description": "Port the API server listens on.",
+      "default": 3000,
+      "minimum": 1
+    },
+    "apiKey": {
+      "type": "string",
+      "description": "Optional bearer token for API authentication. Clients must send this as a Bearer token in the Authorization header."
+    },
+    "corsOrigins": {
+      "type": "array",
+      "description": "Allowed CORS origins. Omit to disable CORS entirely.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "indexes": {
+      "type": "object",
+      "description": "Map of index handles to their configuration. Each key becomes a URL prefix (e.g. /collections/search).",
+      "additionalProperties": {
+        "$ref": "#/$defs/indexConfig"
+      }
+    }
+  },
+  "required": ["indexes"],
+  "additionalProperties": false,
+  "$defs": {
+    "fieldConfig": {
+      "type": "object",
+      "description": "Configuration for a single field: boost weight, searchability, and/or alias to an ES field name.",
+      "properties": {
+        "weight": {
+          "type": "number",
+          "description": "Boost weight for relevance scoring. Implies the field is searchable. Must be greater than 0.",
+          "exclusiveMinimum": 0
+        },
+        "searchable": {
+          "type": "boolean",
+          "description": "Whether this field is included in search queries (without boosting). Only takes effect when weight is not set."
+        },
+        "esField": {
+          "type": "string",
+          "description": "The real Elasticsearch field name. When set, the key acts as a consumer-friendly alias that is translated at the API layer."
+        }
+      },
+      "additionalProperties": false
+    },
+    "indexConfig": {
+      "type": "object",
+      "description": "Configuration for a single search index.",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "description": "Search engine backend to use for this index.",
+          "enum": ["elasticsearch"]
+        },
+        "host": {
+          "type": "string",
+          "description": "Base URL of the search engine instance (e.g. https://elasticsearch.example.com)."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for authenticating with the search engine. Use this OR username/password, not both."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username for basic auth with the search engine. Use with password."
+        },
+        "password": {
+          "type": "string",
+          "description": "Password for basic auth with the search engine. Use with username."
+        },
+        "indexName": {
+          "description": "Elasticsearch index name(s) to search. Use a string for a single index or an array to search across multiple indices.",
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "defaults": {
+          "$ref": "#/$defs/indexDefaults"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Unified field configuration. Each key is a field name (or alias when esField is set). Controls boost weights, searchability, and field name aliasing.",
+          "additionalProperties": {
+            "$ref": "#/$defs/fieldConfig"
+          }
+        }
+      },
+      "required": ["engine", "host", "indexName"],
+      "additionalProperties": false
+    },
+    "indexDefaults": {
+      "type": "object",
+      "description": "Default query parameters applied to every search on this index.",
+      "properties": {
+        "perPage": {
+          "type": "integer",
+          "description": "Default number of results per page.",
+          "minimum": 1
+        },
+        "facets": {
+          "type": "array",
+          "description": "Field names to return as faceted (aggregated) counts by default.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "highlight": {
+          "type": "boolean",
+          "description": "Whether to return highlighted snippets in search results by default."
+        },
+        "suggestField": {
+          "type": "string",
+          "description": "Field to use for phrase suggestions. Required to use the suggest=true parameter on the search endpoint."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "port": 3000,
+      "apiKey": "my-secret-key",
+      "corsOrigins": ["https://example.com"],
+      "indexes": {
+        "collections": {
+          "engine": "elasticsearch",
+          "host": "https://elasticsearch.example.com",
+          "apiKey": "es-api-key",
+          "indexName": "museum_collections",
+          "defaults": {
+            "perPage": 20,
+            "facets": ["category", "period"],
+            "highlight": true,
+            "suggestField": "title"
+          },
+          "fields": {
+            "title": { "weight": 10 },
+            "description": { "weight": 2 },
+            "country": { "esField": "placeCountry" },
+            "region": { "esField": "placeRegion" }
+          }
+        }
+      }
+    }
+  ]
+}

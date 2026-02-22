@@ -1,0 +1,91 @@
+---
+title: Histograms
+description: Aggregate numeric fields into histogram buckets.
+---
+
+import HistogramDemo from "@/components/HistogramDemo.tsx";
+
+## Try it
+
+<HistogramDemo client:only="react" />
+
+Histograms aggregate a numeric field into fixed-interval buckets. Pass a `histogram` JSON parameter to the [search endpoint](/reference/search/).
+
+## Usage
+
+The `histogram` parameter is a JSON object mapping field names to interval sizes (minimum 1):
+
+```bash
+curl "http://localhost:3000/collections/search?q=&histogram=%7B%22population%22%3A1000%7D"
+```
+
+```json title="histogram decoded"
+{ "population": 1000 }
+```
+
+## Response
+
+Histogram data appears in the `histograms` field of the search response:
+
+```json
+{
+  "hits": [],
+  "totalHits": 42,
+  "histograms": {
+    "population": [
+      { "key": 0, "count": 5 },
+      { "key": 1000, "count": 12 },
+      { "key": 2000, "count": 8 },
+      { "key": 3000, "count": 17 }
+    ]
+  }
+}
+```
+
+Each bucket has:
+- `key` — the lower bound of the bucket
+- `count` — the number of documents in that bucket
+
+## Multiple fields
+
+You can request histograms for multiple fields at once:
+
+```json
+{ "population": 1000, "elevation": 100 }
+```
+
+Each field gets its own array of buckets in the response.
+
+## Validation
+
+- Interval values must be at least `1`
+- Fields should be numeric types in the Elasticsearch mapping (use the [mapping endpoint](/reference/mapping/) to check)
+- Invalid JSON returns a `400` error
+
+## Example with filters
+
+Histograms work alongside filters and facets:
+
+```bash
+curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%22Scotland%22%7D&histogram=%7B%22population%22%3A5000%7D"
+```
+
+This returns population histogram buckets for documents in Scotland only.
+
+## Frontend example
+
+Here's how you might use histograms in a React search component to show population distribution:
+
+```tsx
+// Pass the histogram param as a JSON string in your search request
+const params = new URLSearchParams({
+  q: query,
+  histogram: JSON.stringify({ population: 100000 }),
+});
+
+const res = await fetch(`/collections/search?${params}`);
+const data = await res.json();
+
+// data.histograms.population is an array of { key, count } buckets
+// Each bucket spans 100,000 (e.g. 0–99999, 100000–199999, ...)
+```

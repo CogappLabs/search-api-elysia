@@ -1,0 +1,80 @@
+---
+title: Facets
+description: Search within a facet field's values for typeahead facet filtering.
+---
+
+import FacetSearchDemo from "@/components/FacetSearchDemo.tsx";
+
+## Try it
+
+<FacetSearchDemo client:only="react" />
+
+```
+GET /:handle/facets/:field
+```
+
+Search within a facet field's values. Useful for building typeahead facet filters where users search for specific values within a facet.
+
+## Path parameters
+
+| Parameter | Type     | Description                                      |
+| --------- | -------- | ------------------------------------------------ |
+| `handle`  | `string` | Index handle as configured in config.yaml         |
+| `field`   | `string` | Facet field name to search within (supports [aliases](/features/field-aliases/)) |
+
+## Query parameters
+
+| Parameter   | Type     | Default | Description                                              |
+| ----------- | -------- | ------- | -------------------------------------------------------- |
+| `q`         | `string` | `""`    | Text to filter facet values (case-insensitive substring). |
+| `maxValues` | `number` | `20`    | Maximum number of facet values to return (1–100).        |
+| `filters`   | `json`   | —       | JSON object to narrow the facet context. Values can be a string or array of strings. |
+
+The `:field` parameter and `filters` keys support [field aliases](/features/field-aliases/) when configured.
+
+:::note
+The facets endpoint only supports string and string array filters — not boolean or range filters. For those filter types, use the [search endpoint](/reference/search/).
+:::
+
+## Response
+
+```json
+{
+  "field": "country",
+  "values": [
+    { "value": "Scotland", "count": 18 },
+    { "value": "Scandinavia", "count": 5 }
+  ]
+}
+```
+
+| Field    | Type           | Description                    |
+| -------- | -------------- | ------------------------------ |
+| `field`  | `string`       | The facet field name.          |
+| `values` | `FacetValue[]` | Matching values with counts.   |
+
+## Examples
+
+```bash
+# List all country values
+curl "http://localhost:3000/collections/facets/country"
+
+# Search for countries matching "sc"
+curl "http://localhost:3000/collections/facets/country?q=sc"
+
+# Top 5 regions
+curl "http://localhost:3000/collections/facets/region?maxValues=5"
+
+# Regions within Scotland only
+curl "http://localhost:3000/collections/facets/region?filters=%7B%22country%22%3A%22Scotland%22%7D"
+```
+
+The `filters` param in the last example decoded: `{"country":"Scotland"}`
+
+## Error responses
+
+| Status | Condition                                   |
+| ------ | ------------------------------------------- |
+| `400`  | Invalid JSON in `filters`                   |
+| `401`  | Missing or invalid bearer token             |
+| `404`  | Index handle not found                      |

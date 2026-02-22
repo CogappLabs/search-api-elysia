@@ -1,0 +1,83 @@
+---
+title: Getting Started
+description: Install, configure, and run the Search API.
+---
+
+## Prerequisites
+
+- [Bun](https://bun.sh) v1.0 or later
+- An Elasticsearch instance (v7 or v8) with at least one index
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+bun install
+```
+
+## Configuration
+
+Copy the example config and edit it with your Elasticsearch details:
+
+```bash
+cp config.example.yaml config.yaml
+```
+
+A minimal config looks like this:
+
+```yaml
+port: 3000
+
+indexes:
+  my_index:
+    engine: elasticsearch
+    host: https://localhost:9200
+    apiKey: ${ES_API_KEY}
+    indexName: my_es_index
+```
+
+Each key under `indexes` becomes a URL handle — the config above creates endpoints at `/my_index/search`, `/my_index/autocomplete`, etc.
+
+See the [Configuration guide](/guides/configuration/) for the full reference.
+
+## Running
+
+Start the server:
+
+```bash
+# Production
+bun run start
+
+# Development (auto-reload on changes)
+bun run dev
+```
+
+## Verify
+
+Check the health endpoint:
+
+```bash
+curl http://localhost:3000/health
+# {"status":"ok"}
+```
+
+List configured indexes:
+
+```bash
+curl http://localhost:3000/indexes
+# {"indexes":[{"handle":"my_index","engine":"elasticsearch"}]}
+```
+
+Run a search:
+
+```bash
+curl "http://localhost:3000/my_index/search?q=hello"
+```
+
+## Next steps
+
+- [Configuration](/guides/configuration/) — full config file reference
+- [Search endpoint](/reference/search/) — all query parameters
+- [Filters](/features/filters/) — filter types and usage
+- [Field aliases](/features/field-aliases/) — rename fields for consumers

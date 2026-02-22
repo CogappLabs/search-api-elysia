@@ -1,0 +1,64 @@
+---
+title: Mapping
+description: Retrieve the Elasticsearch index mapping.
+---
+
+import MappingDemo from "@/components/MappingDemo.tsx";
+
+## Try it
+
+<MappingDemo client:only="react" />
+
+```
+GET /:handle/mapping
+```
+
+Returns the Elasticsearch mapping for the configured index. Useful for discovering available fields, their types, and analyzers.
+
+## Path parameters
+
+| Parameter | Type     | Description                              |
+| --------- | -------- | ---------------------------------------- |
+| `handle`  | `string` | Index handle as configured in config.yaml |
+
+## Response
+
+Returns the raw Elasticsearch mapping as a JSON object. The structure depends on your index mapping:
+
+```json
+{
+  "title": {
+    "type": "text",
+    "analyzer": "standard"
+  },
+  "country": {
+    "type": "keyword"
+  },
+  "coordinates": {
+    "type": "geo_point"
+  },
+  "population": {
+    "type": "integer"
+  }
+}
+```
+
+## Use cases
+
+- Discover which fields are available for searching, filtering, and faceting
+- Check field types to determine which filter formats to use (e.g. `keyword` fields for string filters, numeric fields for range filters)
+- Identify `geo_point` fields for the [geo map](/features/geo-map/)
+- Find numeric fields suitable for [histograms](/features/histograms/)
+
+## Examples
+
+```bash
+curl "http://localhost:3000/collections/mapping"
+```
+
+## Error responses
+
+| Status | Condition              |
+| ------ | ---------------------- |
+| `401`  | Missing or invalid bearer token |
+| `404`  | Index handle not found |

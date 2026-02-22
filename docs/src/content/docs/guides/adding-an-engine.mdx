@@ -1,0 +1,93 @@
+---
+title: Adding a Search Engine
+description: How to add a new search engine backend (e.g. Meilisearch, Typesense).
+---
+
+The API uses an engine abstraction that makes it straightforward to add new search backends. Currently only Elasticsearch is implemented, but the pattern is designed for extension.
+
+## Overview
+
+Adding a new engine requires three changes:
+
+1. Create a class implementing the `SearchEngine` interface
+2. Register it in the engine factory map
+3. Add the engine name to the config schema
+
+## Step 1: Implement SearchEngine
+
+Create a new file in `src/engines/` (e.g. `meilisearch.ts`). Your class must implement all five methods from `src/engines/engine.ts`:
+
+```typescript
+import type {
+  FacetSearchOptions,
+  FacetValue,
+  SearchOptions,
+  SearchResult,
+} from "../types.ts";
+
+export interface SearchEngine {
+  search(query: string, options: SearchOptions): Promise<SearchResult>;
+  getDocument(id: string): Promise<Record<string, unknown> | null>;
+  searchFacetValues(
+    field: string,
+    query: string,
+    options?: FacetSearchOptions,
+  ): Promise<FacetValue[]>;
+  getMapping(): Promise<Record<string, unknown>>;
+  rawQuery(body: Record<string, unknown>): Promise<Record<string, unknown>>;
+}
+```
+
+### Method details
+
+| Method | Purpose |
+| --- | --- |
+| `search` | Full-text search with pagination, facets, filters, boosts, highlights, histograms, and geo grid. Return a `SearchResult`. |
+| `getDocument` | Fetch a single document by ID. Return `null` if not found. |
+| `searchFacetValues` | Search within a facet field's values by name. Used for autocomplete-style facet filtering. |
+| `getMapping` | Return the index schema/mapping. Structure depends on the engine. |
+| `rawQuery` | Pass a raw query body to the engine. The body shape is engine-specific. |
+
+Your constructor receives the full `IndexConfig` and should extract what it needs (host, auth, index name).
+
+See `src/engines/elasticsearch.ts` for a complete reference implementation.
+
+## Step 2: Register the engine
+
+Add your engine to the factory map in `src/engines/index.ts`:
+
+```typescript
+import { MeilisearchEngine } from "./meilisearch.ts";
+
+const engineFactories: Record<string, (config: IndexConfig) => SearchEngine> = {
+  elasticsearch: (config) => new ElasticsearchEngine(config),
+  meilisearch: (config) => new MeilisearchEngine(config),
+};
+```
+
+## Step 3: Update the config schema
+
+Add the new engine name as a valid literal in `src/config.ts`:
+
+```typescript
+const IndexConfigSchema = t.Object({
+  engine: t.Union([t.Literal("elasticsearch"), t.Literal("meilisearch")]),
+  // ...
+});
+```
+
+Also update `schemas/config.schema.json` to include the new engine in the `enum`:
+
+```json
+"engine": {
+  "type": "string",
+  "enum": ["elasticsearch", "meilisearch"]
+}
+```
+
+## Notes
+
+- The `SearchEngine` interface is engine-agnostic. All engine-specific logic stays inside the engine class.
+- Auth fields on `IndexConfig` (`apiKey`, `username`, `password`) are shared. If your engine needs different auth, you can use these same fields or extend `IndexConfig` with engine-specific options.
+- The `fields` config, alias maps, boosts, and searchable fields are all resolved at the route layer before reaching the engine. Your engine receives pre-translated ES field names via `SearchOptions`.
+- The `rawQuery` endpoint passes the body directly — document the expected format for your engine.

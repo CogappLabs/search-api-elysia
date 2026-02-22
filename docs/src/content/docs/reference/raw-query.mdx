@@ -1,0 +1,82 @@
+---
+title: Raw Query
+description: Forward a raw Elasticsearch query DSL body to the configured index.
+---
+
+import RawQueryDemo from "@/components/RawQueryDemo.tsx";
+
+## Try it
+
+<RawQueryDemo client:only="react" />
+
+```
+POST /:handle/query
+```
+
+Forwards a raw Elasticsearch query DSL body to the configured index and returns the raw Elasticsearch response. Use this when you need full control over the query.
+
+## Path parameters
+
+| Parameter | Type     | Description                              |
+| --------- | -------- | ---------------------------------------- |
+| `handle`  | `string` | Index handle as configured in config.yaml |
+
+## Request body
+
+A JSON object containing a valid [Elasticsearch query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) body:
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "title": "castle" } }
+      ],
+      "filter": [
+        { "term": { "placeCountry": "Scotland" } }
+      ]
+    }
+  },
+  "size": 5
+}
+```
+
+## Response
+
+Returns the raw Elasticsearch search response, including `hits`, `_shards`, `took`, etc.
+
+## Examples
+
+```bash
+curl -X POST "http://localhost:3000/collections/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": { "match_all": {} },
+    "size": 1
+  }'
+```
+
+```bash
+# Aggregation query
+curl -X POST "http://localhost:3000/collections/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "size": 0,
+    "aggs": {
+      "countries": {
+        "terms": { "field": "placeCountry", "size": 10 }
+      }
+    }
+  }'
+```
+
+:::caution
+Raw queries bypass field alias translation and parameter validation. Use the real Elasticsearch field names, not aliases.
+:::
+
+## Error responses
+
+| Status | Condition              |
+| ------ | ---------------------- |
+| `401`  | Missing or invalid bearer token |
+| `404`  | Index handle not found |

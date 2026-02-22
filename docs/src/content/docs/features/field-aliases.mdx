@@ -1,0 +1,87 @@
+---
+title: Field Aliases
+description: Map consumer-friendly field names to Elasticsearch field names.
+---
+
+Field aliases let you expose consumer-friendly field names in the API while keeping your Elasticsearch mapping unchanged. Translation is automatic and bidirectional — aliases are converted to real field names before querying Elasticsearch, and real field names are converted back to aliases in the response.
+
+## Configuration
+
+Define aliases using the `esField` property in the `fields` config for each index:
+
+```yaml
+indexes:
+  collections:
+    engine: elasticsearch
+    host: https://elasticsearch.example.com
+    indexName: museum_collections
+    fields:
+      country:
+        esField: placeCountry
+      region:
+        esField: placeRegion
+      coords:
+        esField: placeCoordinates
+```
+
+With this config, API consumers use `country` and the API translates it to `placeCountry` for Elasticsearch.
+
+Aliases can be combined with other field properties (`weight`, `searchable`):
+
+```yaml
+fields:
+  country:
+    esField: placeCountry
+    weight: 5
+```
+
+## How translation works
+
+### Inbound (request)
+
+When a request comes in, alias field names in the following parameters are translated to Elasticsearch field names:
+
+- `sort` keys — `{"country":"asc"}` → `{"placeCountry":"asc"}`
+- `facets` values — `country,region` → `placeCountry,placeRegion`
+- `filters` keys — `{"country":"Scotland"}` → `{"placeCountry":"Scotland"}`
+- `boosts` keys — `{"country":5}` → `{"placeCountry":5}`
+- `fields` values — `country,title` → `placeCountry,title`
+- `histogram` keys — `{"country":100}` → `{"placeCountry":100}`
+- `geoGrid.field` — `coords` → `placeCoordinates`
+- Facet endpoint `:field` path parameter — `/facets/country` → queries `placeCountry`
+- Facet endpoint `filters` keys
+
+### Outbound (response)
+
+Elasticsearch field names are translated back to aliases in:
+
+- `facets` keys — `{"placeCountry":[...]}` → `{"country":[...]}`
+- `histograms` keys
+- `_highlights` keys in each hit
+- `_highlights` keys in geo map sample hits
+
+## Passthrough behavior
+
+- Fields that are not aliases pass through unchanged in both directions
+- When no `fields` with `esField` are configured for an index, the alias map has zero overhead — no translation is performed
+- Real ES field names can still be used alongside aliases (they pass through as-is)
+
+## Examples
+
+Given the alias config above:
+
+```bash
+# Filter using an alias
+curl "http://localhost:3000/collections/search?q=castle&filters=%7B%22country%22%3A%22Scotland%22%7D"
+
+# Facets using aliases
+curl "http://localhost:3000/collections/search?q=&facets=country,region"
+
+# Facet search using an alias
+curl "http://localhost:3000/collections/facets/country?q=sc"
+
+# Sort using an alias
+curl "http://localhost:3000/collections/search?q=&sort=%7B%22country%22%3A%22asc%22%7D"
+```
+
+In all cases, the response uses the alias names (`country`, `region`) rather than the Elasticsearch names (`placeCountry`, `placeRegion`).

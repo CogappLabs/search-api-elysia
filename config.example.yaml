@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=./schemas/config.schema.json
+# Search API Configuration
+# Copy to config.yaml and fill in your values.
+# Environment variables can be referenced with ${VAR_NAME} syntax.
+
+port: 3000
+
+# Optional bearer token for API authentication.
+# Can also be set via API_KEY env var.
+# apiKey: ${API_KEY}
+
+# Optional CORS allowed origins (omit to disable CORS).
+# corsOrigins:
+#   - https://example.com
+#   - https://app.example.com
+
+indexes:
+  # Each key becomes the URL handle (e.g. /collections/search)
+  collections:
+    engine: elasticsearch
+    host: https://elasticsearch.example.com
+    # Auth: use apiKey OR username/password (not both)
+    apiKey: ${ES_API_KEY}
+    # username: ${ES_USERNAME}
+    # password: ${ES_PASSWORD}
+    indexName: museum_collections
+    defaults:
+      perPage: 20
+      facets:
+        - category
+        - period
+      highlight: true
+      # suggestField: title  # Required for phrase suggestions (ES 7+ removed _all)
+    # fields:                # Unified field config: weight, searchable, esField
+    #   title:
+    #     weight: 10         # Boost weight (implies searchable)
+    #   description:
+    #     weight: 2
+    #   body:
+    #     searchable: true   # Searchable without boost
+    #   country:
+    #     esField: placeCountry  # Alias → real ES field name
+    #   region:
+    #     esField: placeRegion
+    #   coords:
+    #     esField: placeCoordinates
+
+  catalogue:
+    engine: elasticsearch
+    host: https://elasticsearch.example.com
+    indexName: library_catalogue
+
+  # Multi-index example: search across multiple ES indices with a single handle.
+  # Results are unified and relevance-ranked; each hit includes an _index field.
+  # all_content:
+  #   engine: elasticsearch
+  #   host: https://elasticsearch.example.com
+  #   indexName:
+  #     - museum_collections
+  #     - library_catalogue

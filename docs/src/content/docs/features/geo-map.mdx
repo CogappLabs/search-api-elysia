@@ -1,0 +1,109 @@
+---
+title: Geo Map
+description: Aggregate geo-located documents into tile grid groups for map-based UIs.
+---
+
+import GeoClusterDemo from "@/components/GeoClusterDemo.tsx";
+
+## Try it
+
+<GeoClusterDemo client:only="react" />
+
+The geo map feature groups documents by geographic location using Elasticsearch's geotile grid aggregation. This is useful for map-based UIs where you want to show grouped results instead of individual pins at low zoom levels.
+
+## Usage
+
+Pass a `geoGrid` JSON parameter to the [search endpoint](/reference/search/):
+
+```bash
+curl "http://localhost:3000/collections/search?q=&geoGrid=%7B%22field%22%3A%22coordinates%22%2C%22precision%22%3A6%2C%22bounds%22%3A%7B%22top_left%22%3A%7B%22lat%22%3A60%2C%22lon%22%3A-5%7D%2C%22bottom_right%22%3A%7B%22lat%22%3A48%2C%22lon%22%3A3%7D%7D%7D"
+```
+
+```json title="geoGrid decoded"
+{
+  "field": "coordinates",
+  "precision": 6,
+  "bounds": {
+    "top_left": { "lat": 60, "lon": -5 },
+    "bottom_right": { "lat": 48, "lon": 3 }
+  }
+}
+```
+
+### Parameters
+
+| Field       | Type     | Description                                         |
+| ----------- | -------- | --------------------------------------------------- |
+| `field`     | `string` | The `geo_point` field to aggregate on (supports [aliases](/features/field-aliases/)) |
+| `precision` | `integer`| Tile grid precision level (1–29). Higher values = smaller tiles = more groups. |
+| `bounds`    | `object` | Bounding box with `top_left` and `bottom_right` geo points (`lat`, `lon`). |
+
+## Precision levels
+
+Precision controls the tile size. Some practical guidelines:
+
+| Precision | Approximate tile size | Use case           |
+| --------- | --------------------- | ------------------ |
+| 3–5       | Country/region level  | World/continent view |
+| 6–8       | City level            | Country view       |
+| 9–12      | Neighborhood level    | City view          |
+| 13+       | Street level          | Neighborhood view  |
+
+## Response
+
+Geo map data appears in the `geoClusters` field of the search response:
+
+```json
+{
+  "hits": [],
+  "totalHits": 42,
+  "geoClusters": [
+    {
+      "lat": 55.94,
+      "lng": -3.19,
+      "count": 8,
+      "key": "6/31/20",
+      "hit": {
+        "objectID": "498",
+        "_index": "museum_collections",
+        "_score": null,
+        "_highlights": {},
+        "title": "Edinburgh Castle"
+      }
+    },
+    {
+      "lat": 51.50,
+      "lng": -0.12,
+      "count": 15,
+      "key": "6/31/21",
+      "hit": {
+        "objectID": "501",
+        "_index": "museum_collections",
+        "_score": null,
+        "_highlights": {},
+        "title": "Tower of London"
+      }
+    }
+  ]
+}
+```
+
+Each entry has:
+
+| Field   | Type          | Description                                     |
+| ------- | ------------- | ----------------------------------------------- |
+| `lat`   | `number`      | Centroid latitude of the tile.                   |
+| `lng`   | `number`      | Centroid longitude of the tile.                  |
+| `count` | `number`      | Number of documents in this tile.                |
+| `key`   | `string`      | Geotile grid key in `zoom/x/y` format.           |
+| `hit`   | `SearchHit?`  | A sample document from this tile (if available). |
+
+The centroid coordinates are computed from the tile key using Web Mercator projection math, placing the point at the center of the tile.
+
+## Example with filters
+
+Geo map results can be combined with filters to show groups for a subset of data:
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle&filters=%7B%22country%22%3A%22Scotland%22%7D&geoGrid=%7B%22field%22%3A%22coordinates%22%2C%22precision%22%3A8%2C%22bounds%22%3A%7B%22top_left%22%3A%7B%22lat%22%3A61%2C%22lon%22%3A-8%7D%2C%22bottom_right%22%3A%7B%22lat%22%3A54%2C%22lon%22%3A0%7D%7D%7D"
+```

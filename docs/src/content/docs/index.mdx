@@ -1,0 +1,37 @@
+---
+title: Search API
+description: A unified REST search interface over Elasticsearch indexes.
+template: splash
+hero:
+  tagline: A fast, config-driven search API built with Bun and Elysia. Define your indexes in YAML, get a full-featured REST API with facets, filters, histograms, geo map, and field aliases.
+  actions:
+    - text: Getting Started
+      link: /guides/getting-started/
+      icon: right-arrow
+    - text: Features
+      link: /reference/search/
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Features
+
+<CardGrid>
+	<Card title="Config-driven" icon="setting">
+		Define indexes in a single YAML file with environment variable interpolation. Configure
+		field weights, searchability, and aliases in one place.
+	</Card>
+	<Card title="Full-text search" icon="magnifier">
+		Pagination, sorting, highlighting, facets, filters, field boosts, histograms, and spelling
+		suggestions out of the box.
+	</Card>
+	<Card title="Geo map" icon="globe">
+		Aggregate geo-located documents into tile grid groups with configurable precision and
+		bounding boxes.
+	</Card>
+	<Card title="Field aliases" icon="pencil">
+		Expose consumer-friendly field names while keeping your Elasticsearch mapping unchanged.
+		Translation is automatic and bidirectional.
+	</Card>
+</CardGrid>

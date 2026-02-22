@@ -1,0 +1,131 @@
+---
+title: Search
+description: Full-text search endpoint with pagination, facets, filters, sorting, and more.
+---
+
+import SearchDemo from "@/components/SearchDemo.tsx";
+
+## Try it
+
+<SearchDemo client:only="react" />
+
+```
+GET /:handle/search
+```
+
+Full-text search with pagination, facets, filters, sorting, highlighting, histograms, and geo clustering.
+
+## Query parameters
+
+| Parameter   | Type     | Default          | Description                                                    |
+| ----------- | -------- | ---------------- | -------------------------------------------------------------- |
+| `q`         | `string` | `""`             | Search query text. Empty string returns all documents.         |
+| `page`      | `number` | `1`              | Page number (1-based).                                         |
+| `perPage`   | `number` | `20` / config    | Results per page (1–100).                                      |
+| `sort`      | `json`   | —                | Sort order. JSON object mapping field names to `"asc"` or `"desc"`. |
+| `facets`    | `string` | config default   | Comma-separated list of fields to aggregate as facets.         |
+| `filters`   | `json`   | —                | Field filters. See [Filters](/features/filters/).              |
+| `highlight` | `string` | config default   | `"true"` to return highlighted fragments with `<mark>` tags.  |
+| `fields`    | `string` | all fields       | Comma-separated list of fields to return.                      |
+| `suggest`   | `string` | —                | `"true"` to enable phrase suggestions (requires `suggestField` in config). |
+| `boosts`    | `json`   | config default   | Field boost weights. JSON object mapping field names to numbers. |
+| `histogram` | `json`   | —                | Histogram intervals. See [Histograms](/features/histograms/). |
+| `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](/features/geo-map/). |
+
+When no `boosts` are provided (via query param or config), the search uses all fields by default. Use `fields` in the index config with `weight` or `searchable: true` to control which fields are searched. See [Configuration](/guides/configuration/#fields).
+
+All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `histogram`, `geoGrid.field`) support [field aliases](/features/field-aliases/) when configured.
+
+## Response
+
+```json
+{
+  "hits": [
+    {
+      "objectID": "498",
+      "_index": "museum_collections",
+      "_score": 12.5,
+      "_highlights": {
+        "title": ["Stirling <mark>Castle</mark>"]
+      },
+      "title": "Stirling Castle",
+      "country": "Scotland"
+    }
+  ],
+  "totalHits": 42,
+  "page": 1,
+  "perPage": 20,
+  "totalPages": 3,
+  "facets": {
+    "country": [
+      { "value": "Scotland", "count": 18 },
+      { "value": "England", "count": 15 }
+    ]
+  },
+  "suggestions": []
+}
+```
+
+| Field          | Type                              | Description                                        |
+| -------------- | --------------------------------- | -------------------------------------------------- |
+| `hits`         | `SearchHit[]`                     | Array of matching documents.                       |
+| `totalHits`    | `number`                          | Total number of matching documents.                |
+| `page`         | `number`                          | Current page number (1-based).                     |
+| `perPage`      | `number`                          | Results per page.                                  |
+| `totalPages`   | `number`                          | Total number of pages.                             |
+| `facets`       | `Record<string, FacetValue[]>`    | Facet aggregations keyed by field name.            |
+| `histograms`   | `Record<string, Bucket[]>?`       | Histogram aggregations (when requested).           |
+| `geoClusters`  | `GeoCluster[]?`                   | Geo tile grid results (when requested).            |
+| `suggestions`  | `string[]`                        | Spelling/phrase suggestions.                       |
+
+Each hit contains all document fields plus metadata: `objectID`, `_index`, `_score`, and `_highlights`.
+
+## Examples
+
+### Basic search
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle"
+```
+
+### Paginated and sorted
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle&page=2&perPage=10&sort=%7B%22title%22%3A%22asc%22%7D"
+```
+
+The `sort` param decoded: `{"title":"asc"}`
+
+### With facets and filters
+
+```bash
+curl "http://localhost:3000/collections/search?q=&facets=country,region&filters=%7B%22country%22%3A%22Scotland%22%7D"
+```
+
+### Highlighting enabled
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle&highlight=true"
+```
+
+### Specific fields only
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle&fields=title,country"
+```
+
+### With field boosts
+
+```bash
+curl "http://localhost:3000/collections/search?q=castle&boosts=%7B%22title%22%3A10%2C%22description%22%3A2%7D"
+```
+
+The `boosts` param decoded: `{"title":10,"description":2}`
+
+## Error responses
+
+| Status | Condition                                   |
+| ------ | ------------------------------------------- |
+| `400`  | Invalid JSON in `sort`, `filters`, `boosts`, `histogram`, or `geoGrid` |
+| `401`  | Missing or invalid bearer token             |
+| `404`  | Index handle not found                      |
