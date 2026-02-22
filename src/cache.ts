@@ -54,18 +54,34 @@ export function createCache(redisUrl?: string): Cache | null {
 }
 
 /**
+ * Recursively sort object keys for deterministic serialization.
+ * Arrays are preserved in order; nested objects get sorted keys.
+ */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  const entries = keys.map(
+    (k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`,
+  );
+  return `{${entries.join(",")}}`;
+}
+
+/**
  * Build a deterministic cache key from search parameters.
- * Sorts object keys to ensure identical queries produce identical keys.
+ * Sorts object keys at all levels to ensure identical queries produce identical keys.
  */
 export function buildSearchCacheKey(
   handle: string,
   q: string,
   options: Record<string, unknown>,
 ): string {
-  const canonical = JSON.stringify(
-    { q, ...options },
-    Object.keys({ q, ...options }).sort(),
-  );
+  const canonical = stableStringify({ q, ...options });
   const hash = new Bun.CryptoHasher("sha256").update(canonical).digest("hex");
   return `search:${handle}:${hash}`;
 }

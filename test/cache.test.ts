@@ -50,6 +50,26 @@ describe("buildSearchCacheKey", () => {
     });
     expect(key1).toBe(key2);
   });
+
+  it("produces different keys for different nested filter values", () => {
+    const key1 = buildSearchCacheKey("idx", "", {
+      filters: { placeCountry: "Scotland" },
+    });
+    const key2 = buildSearchCacheKey("idx", "", {
+      filters: { placeCountry: "Wales" },
+    });
+    expect(key1).not.toBe(key2);
+  });
+
+  it("produces the same key for nested objects with different key order", () => {
+    const key1 = buildSearchCacheKey("idx", "", {
+      filters: { country: "Scotland", region: "Highlands" },
+    });
+    const key2 = buildSearchCacheKey("idx", "", {
+      filters: { region: "Highlands", country: "Scotland" },
+    });
+    expect(key1).toBe(key2);
+  });
 });
 
 describe("createCache", () => {

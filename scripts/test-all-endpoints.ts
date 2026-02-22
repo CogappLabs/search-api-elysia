@@ -1,10 +1,17 @@
 /**
  * Test all API endpoints against a running server.
- * Start the server first: bun run dev
- * Usage: bun run scripts/test-all-endpoints.ts
+ *
+ * Usage:
+ *   bun run scripts/test-all-endpoints.ts            # local (localhost:3000)
+ *   bun run scripts/test-all-endpoints.ts --railway   # Railway production
+ *   BASE_URL=https://custom.host bun run scripts/test-all-endpoints.ts
  */
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
+const RAILWAY_URL = "https://search-api-elysia-production.up.railway.app";
+
+const isRailway = process.argv.includes("--railway");
+const BASE =
+  process.env.BASE_URL ?? (isRailway ? RAILWAY_URL : "http://localhost:3000");
 const HANDLE = process.env.HANDLE ?? "craft_search_plugin_labs";
 
 let passed = 0;
@@ -84,13 +91,13 @@ await test("GET /:handle/search with facets", async () => {
   );
   assert(res.status === 200, `Expected 200, got ${res.status}`);
   const body = await res.json();
-  assert(body.facets.placeCountry, "Expected placeCountry facet");
-  assert(
-    Array.isArray(body.facets.placeCountry),
-    "Expected facet values array",
-  );
+  // Facet keys may be aliased (e.g. "country" instead of "placeCountry")
+  const countryFacet = body.facets.placeCountry ?? body.facets.country;
+  const regionFacet = body.facets.placeRegion ?? body.facets.region;
+  assert(countryFacet, "Expected country facet (placeCountry or country)");
+  assert(Array.isArray(countryFacet), "Expected facet values array");
   console.log(
-    `        -> ${body.facets.placeCountry.length} country values, ${body.facets.placeRegion?.length ?? 0} region values`,
+    `        -> ${countryFacet.length} country values, ${regionFacet?.length ?? 0} region values`,
   );
 });
 
