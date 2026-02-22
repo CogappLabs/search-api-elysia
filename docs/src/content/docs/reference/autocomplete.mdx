@@ -58,16 +58,16 @@ Only `hits`, `totalHits`, and optionally `facets` are returned — no `page`, `p
 
 ```bash
 # Basic autocomplete
-curl "http://localhost:3000/collections/autocomplete?q=ston"
+curl "https://search-api-elysia-production.up.railway.app/collections/autocomplete?q=ston"
 
 # Limit to 3 results
-curl "http://localhost:3000/collections/autocomplete?q=cas&perPage=3"
+curl "https://search-api-elysia-production.up.railway.app/collections/autocomplete?q=cas&perPage=3"
 
 # With facet value search
-curl "http://localhost:3000/collections/autocomplete?q=sc&facets=country,region"
+curl "https://search-api-elysia-production.up.railway.app/collections/autocomplete?q=sc&facets=country,region"
 
 # More facet values per field
-curl "http://localhost:3000/collections/autocomplete?q=sc&facets=country&maxFacetsPerField=8"
+curl "https://search-api-elysia-production.up.railway.app/collections/autocomplete?q=sc&facets=country&maxFacetsPerField=8"
 ```
 
 ## Error responses

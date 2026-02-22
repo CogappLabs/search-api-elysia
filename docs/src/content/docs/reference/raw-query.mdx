@@ -48,7 +48,7 @@ Returns the raw Elasticsearch search response, including `hits`, `_shards`, `too
 ## Examples
 
 ```bash
-curl -X POST "http://localhost:3000/collections/query" \
+curl -X POST "https://search-api-elysia-production.up.railway.app/collections/query" \
   -H "Content-Type: application/json" \
   -d '{
     "query": { "match_all": {} },
@@ -58,7 +58,7 @@ curl -X POST "http://localhost:3000/collections/query" \
 
 ```bash
 # Aggregation query
-curl -X POST "http://localhost:3000/collections/query" \
+curl -X POST "https://search-api-elysia-production.up.railway.app/collections/query" \
   -H "Content-Type: application/json" \
   -d '{
     "size": 0,

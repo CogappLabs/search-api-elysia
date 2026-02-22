@@ -58,21 +58,21 @@ bun run dev
 Check the health endpoint:
 
 ```bash
-curl http://localhost:3000/health
+curl https://search-api-elysia-production.up.railway.app/health
 # {"status":"ok"}
 ```
 
 List configured indexes:
 
 ```bash
-curl http://localhost:3000/indexes
+curl https://search-api-elysia-production.up.railway.app/indexes
 # {"indexes":[{"handle":"my_index","engine":"elasticsearch"}]}
 ```
 
 Run a search:
 
 ```bash
-curl "http://localhost:3000/my_index/search?q=hello"
+curl "https://search-api-elysia-production.up.railway.app/my_index/search?q=hello"
 ```
 
 ## Next steps

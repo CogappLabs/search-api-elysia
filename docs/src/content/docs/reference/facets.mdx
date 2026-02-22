@@ -57,16 +57,16 @@ The facets endpoint only supports string and string array filters — not boolea
 
 ```bash
 # List all country values
-curl "http://localhost:3000/collections/facets/country"
+curl "https://search-api-elysia-production.up.railway.app/collections/facets/country"
 
 # Search for countries matching "sc"
-curl "http://localhost:3000/collections/facets/country?q=sc"
+curl "https://search-api-elysia-production.up.railway.app/collections/facets/country?q=sc"
 
 # Top 5 regions
-curl "http://localhost:3000/collections/facets/region?maxValues=5"
+curl "https://search-api-elysia-production.up.railway.app/collections/facets/region?maxValues=5"
 
 # Regions within Scotland only
-curl "http://localhost:3000/collections/facets/region?filters=%7B%22country%22%3A%22Scotland%22%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/facets/region?filters=%7B%22country%22%3A%22Scotland%22%7D"
 ```
 
 The `filters` param in the last example decoded: `{"country":"Scotland"}`

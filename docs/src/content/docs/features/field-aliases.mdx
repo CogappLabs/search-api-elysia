@@ -72,16 +72,16 @@ Given the alias config above:
 
 ```bash
 # Filter using an alias
-curl "http://localhost:3000/collections/search?q=castle&filters=%7B%22country%22%3A%22Scotland%22%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=castle&filters=%7B%22country%22%3A%22Scotland%22%7D"
 
 # Facets using aliases
-curl "http://localhost:3000/collections/search?q=&facets=country,region"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&facets=country,region"
 
 # Facet search using an alias
-curl "http://localhost:3000/collections/facets/country?q=sc"
+curl "https://search-api-elysia-production.up.railway.app/collections/facets/country?q=sc"
 
 # Sort using an alias
-curl "http://localhost:3000/collections/search?q=&sort=%7B%22country%22%3A%22asc%22%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&sort=%7B%22country%22%3A%22asc%22%7D"
 ```
 
 In all cases, the response uses the alias names (`country`, `region`) rather than the Elasticsearch names (`placeCountry`, `placeRegion`).

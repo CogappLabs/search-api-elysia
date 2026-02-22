@@ -12,7 +12,7 @@ Filters narrow search results to documents matching specific field values. Pass 
 Match documents where a field equals a specific value:
 
 ```bash
-curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%22Scotland%22%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&filters=%7B%22country%22%3A%22Scotland%22%7D"
 ```
 
 ```json title="filters decoded"
@@ -24,7 +24,7 @@ curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%22
 Match documents where a field equals any of the given values (OR logic):
 
 ```bash
-curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%5B%22Scotland%22%2C%22Wales%22%5D%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&filters=%7B%22country%22%3A%5B%22Scotland%22%2C%22Wales%22%5D%7D"
 ```
 
 ```json title="filters decoded"
@@ -36,7 +36,7 @@ curl "http://localhost:3000/collections/search?q=&filters=%7B%22country%22%3A%5B
 Match documents where a boolean field is `true` or `false`:
 
 ```bash
-curl "http://localhost:3000/collections/search?q=&filters=%7B%22hasImage%22%3Atrue%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&filters=%7B%22hasImage%22%3Atrue%7D"
 ```
 
 ```json title="filters decoded"
@@ -48,7 +48,7 @@ curl "http://localhost:3000/collections/search?q=&filters=%7B%22hasImage%22%3Atr
 Match documents where a numeric field falls within a range. Both `min` and `max` are optional:
 
 ```bash
-curl "http://localhost:3000/collections/search?q=&filters=%7B%22population%22%3A%7B%22min%22%3A10000%2C%22max%22%3A500000%7D%7D"
+curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&filters=%7B%22population%22%3A%7B%22min%22%3A10000%2C%22max%22%3A500000%7D%7D"
 ```
 
 ```json title="filters decoded"

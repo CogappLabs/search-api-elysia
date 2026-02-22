@@ -29,7 +29,7 @@ type Option =
 export default function AutocompleteDemo() {
   const stored = loadConfig();
   const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "http://localhost:3000",
+    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
   );
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
