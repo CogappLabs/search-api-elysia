@@ -24,7 +24,7 @@ export function ApiConfig({
       <p className="px-4 pt-3 text-xs text-gray-500 dark:text-gray-400">
         Requires a running Search API instance. See the{" "}
         <a
-          href={`${import.meta.env.BASE_URL}guides/getting-started/`}
+          href={`${import.meta.env.BASE_URL}/guides/getting-started/`}
           className="underline hover:text-gray-700 dark:hover:text-gray-200"
         >
           Getting Started
