@@ -14,6 +14,11 @@ bunx tsc --noEmit                 # type check
 
 After significant changes, run both: `bunx @biomejs/biome check src/ test/ && bunx tsc --noEmit`
 
+```bash
+bun run docs:dev                  # run docs site locally (Astro)
+bun run docs:build                # build docs for production
+```
+
 ## Overview
 
 Bun + Elysia search API that provides a unified REST interface over external search engine indexes (currently Elasticsearch). Configuration is YAML-driven — each configured index gets its own set of routes under `/:handle/`.
@@ -24,7 +29,7 @@ Bun + Elysia search API that provides a unified REST interface over external sea
 
 **Routes as Elysia plugins** (`src/routes/`): Route files export factory functions that accept runtime dependencies (engine map, config map, alias maps, boosts maps, searchable fields maps) and return Elysia plugin instances. `search-api.ts` has the main endpoints (search, autocomplete, documents, facets). `indexes.ts` lists configured indexes.
 
-**Config loading** (`src/config.ts`): Reads `config.yaml`, interpolates `${ENV_VAR}` references, validates against TypeBox schemas. Config file is gitignored; copy `config.example.yaml` to get started.
+**Config loading** (`src/config.ts`): Reads `config.yaml`, interpolates `${ENV_VAR}` references, validates against TypeBox schemas. Copy `config.example.yaml` to get started. JSON schema at `schemas/config.schema.json` provides editor autocompletion (VS Code picks this up via `.vscode/settings.json`).
 
 **Unified fields config** (`fields` in config.yaml): Field weights, searchability, and aliases are all defined under a single `fields` key per index. At startup, `deriveFromFields()` in `src/index.ts` splits this into three derived maps:
 - `aliases` — fields with `esField` (fed to `FieldAliasMap`)
@@ -41,6 +46,8 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 
 **Request flow**: `src/index.ts` loads config → calls `deriveFromFields()` per index → creates engine instances, `FieldAliasMap` instances, and derived boost/searchable maps → mounts routes → applies bearer token auth (optional), CORS, and error handling as Elysia middleware.
 
+**CORS**: Controlled via `corsOrigins` in config. When omitted, CORS is disabled (`false`). Set explicit origins for cross-origin access (e.g. docs demos need `http://localhost:4321`).
+
 ## Conventions
 
 - Biome for linting/formatting with **2-space indentation**
@@ -48,4 +55,6 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 - Tests use `bun:test` with mock engines — routes are tested by constructing Elysia apps with `app.handle(new Request(...))`, no HTTP server needed
 - All shared types live in `src/types.ts`
 - Scripts for ad-hoc testing go in `scripts/`
-- Docs site is Astro + Starlight in `docs/` — uses tabs for indentation (Astro convention)
+- Docs site is Astro + Starlight in `docs/` — deployed to GitHub Pages via `.github/workflows/docs.yml`
+- Docs use `base: "/search-api-elysia"` — use relative links in mdx content, `import.meta.env.BASE_URL` in React components
+- Interactive demos in `docs/src/components/` require a running API with CORS enabled for the docs origin

@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=./schemas/config.schema.json
 port: 3000
+corsOrigins:
+  - http://localhost:4321
+  - http://localhost:4322
 
 indexes:
   craft_search_plugin_labs:

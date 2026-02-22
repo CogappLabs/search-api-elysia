@@ -29,4 +29,16 @@ bun test                                    # run tests
 bunx @biomejs/biome check src/ test/        # lint
 bunx tsc --noEmit                           # type check
 bun run docs:dev                            # run docs site locally
+bun run docs:build                          # build docs for production
 ```
+
+## CORS
+
+CORS is disabled by default. Add `corsOrigins` to your `config.yaml` to allow cross-origin requests:
+
+```yaml
+corsOrigins:
+  - http://localhost:4321
+```
+
+This is needed for the interactive demos in the docs site to reach your local API.
