@@ -6,6 +6,7 @@ import {
   type InstantSearchRequest,
   toSearchOptions,
 } from "../instantsearch.ts";
+import { models } from "../models.ts";
 import type { IndexConfig } from "../types.ts";
 
 const noAliases = new FieldAliasMap();
@@ -34,8 +35,6 @@ const InstantSearchRequestSchema = t.Object({
   ),
 });
 
-const ErrorResponse = t.Object({ error: t.String() });
-
 export function instantSearchRoutes(
   engines: Map<string, SearchEngine>,
   configs: Map<string, IndexConfig>,
@@ -44,6 +43,7 @@ export function instantSearchRoutes(
   searchableFieldsMaps?: Map<string, string[]>,
 ) {
   return new Elysia({ name: "routes.instantsearch" })
+    .use(models)
     .resolve(({ params }) => {
       const handle = (params as Record<string, string>).handle ?? "";
       return {
@@ -164,7 +164,7 @@ export function instantSearchRoutes(
               }),
             ),
           }),
-          404: ErrorResponse,
+          404: "error",
         },
         detail: {
           summary: "InstantSearch-compatible multi-query",

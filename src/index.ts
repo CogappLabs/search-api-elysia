@@ -1,5 +1,6 @@
 import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
+import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, status as httpStatus, t } from "elysia";
 import { createCache } from "./cache.ts";
 import { loadConfig } from "./config.ts";
@@ -79,6 +80,7 @@ for (const [handle, indexConfig] of Object.entries(config.indexes)) {
 }
 
 const app = new Elysia()
+  .use(serverTiming())
   .use(
     openapi({
       documentation: {
@@ -96,19 +98,6 @@ const app = new Elysia()
       origin: config.corsOrigins === "*" ? true : (config.corsOrigins ?? false),
     }),
   )
-  .onBeforeHandle(({ headers, path }) => {
-    if (path === "/health" || path === "/openapi" || path === "/openapi/json")
-      return;
-
-    const requiredKey = config.apiKey ?? process.env.API_KEY;
-    if (!requiredKey) return;
-
-    const auth = headers.authorization ?? "";
-    const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    if (provided !== requiredKey) {
-      return httpStatus(401, { error: "Unauthorized" });
-    }
-  })
   .mapResponse(({ response, headers, set }) => {
     const accept = headers["accept-encoding"] ?? "";
     if (!accept.includes("gzip")) return;
@@ -144,6 +133,18 @@ const app = new Elysia()
       detail: { summary: "Health check", tags: ["System"] },
     },
   )
+  .guard({
+    beforeHandle({ headers }) {
+      const requiredKey = config.apiKey ?? process.env.API_KEY;
+      if (!requiredKey) return;
+
+      const auth = headers.authorization ?? "";
+      const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      if (provided !== requiredKey) {
+        return httpStatus(401, { error: "Unauthorized" });
+      }
+    },
+  })
   .post(
     "/cache/clear",
     async () => {
@@ -191,5 +192,20 @@ const app = new Elysia()
   .listen(config.port);
 
 console.log(`Search API running at http://localhost:${app.server?.port}`);
+
+// Graceful shutdown
+let isShuttingDown = false;
+
+function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`${signal} received, shutting down gracefully...`);
+  app.stop();
+  console.log("Server stopped");
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export type App = typeof app;

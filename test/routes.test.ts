@@ -809,24 +809,20 @@ describe("Field alias translation", () => {
   });
 });
 
-describe("Auth middleware", () => {
+describe("Auth guard", () => {
   function createAuthApp(apiKey: string) {
     const engine = createMockEngine();
     const app = new Elysia()
-      .onBeforeHandle(({ headers, path }) => {
-        if (
-          path === "/health" ||
-          path === "/openapi" ||
-          path === "/openapi/json"
-        )
-          return;
-        const auth = headers.authorization ?? "";
-        const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-        if (provided !== apiKey) {
-          return httpStatus(401, { error: "Unauthorized" });
-        }
-      })
       .get("/health", () => ({ status: "ok" }))
+      .guard({
+        beforeHandle({ headers }) {
+          const auth = headers.authorization ?? "";
+          const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+          if (provided !== apiKey) {
+            return httpStatus(401, { error: "Unauthorized" });
+          }
+        },
+      })
       .use(
         searchApiRoutes(
           new Map([["test", engine]]),

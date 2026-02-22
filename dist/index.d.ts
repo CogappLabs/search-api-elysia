@@ -19,7 +19,24 @@ declare const app: Elysia<"", {
 } & {
     typebox: {};
     error: {};
+} & {
+    typebox: {};
+    error: {};
+} & {
+    typebox: {
+        readonly error: import("@sinclair/typebox").TObject<{
+            error: import("@sinclair/typebox").TString;
+        }>;
+    };
+    error: {};
 }, {
+    schema: {};
+    standaloneSchema: {};
+    macro: {};
+    macroFn: {};
+    parser: {};
+    response: {};
+} & {
     schema: {};
     standaloneSchema: {};
     macro: {};
@@ -51,9 +68,6 @@ declare const app: Elysia<"", {
                 200: {
                     cache: string;
                     status: string;
-                };
-                401: {
-                    readonly error: "Unauthorized";
                 };
                 422: {
                     type: "validation";
@@ -461,6 +475,7 @@ declare const app: Elysia<"", {
         200: {
             error: string;
         };
+    } & {
         401: {
             readonly error: "Unauthorized";
         };

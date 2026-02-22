@@ -11,6 +11,13 @@ export declare function searchApiRoutes(engines: Map<string, SearchEngine>, conf
 }, {
     typebox: {};
     error: {};
+} & {
+    typebox: {
+        readonly error: import("@sinclair/typebox").TObject<{
+            error: import("@sinclair/typebox").TString;
+        }>;
+    };
+    error: {};
 }, {
     schema: {};
     standaloneSchema: {};

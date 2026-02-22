@@ -2,6 +2,7 @@ import { Elysia, status, t } from "elysia";
 import { buildSearchCacheKey, CACHE_VERSION, type Cache } from "../cache.ts";
 import type { SearchEngine } from "../engines/engine.ts";
 import { FieldAliasMap } from "../field-aliases.ts";
+import { models } from "../models.ts";
 import type { IndexConfig, SearchOptions, SearchResult } from "../types.ts";
 import {
   BoostsSchema,
@@ -14,8 +15,6 @@ import {
 } from "../validation.ts";
 
 const MAX_PER_PAGE = 100;
-
-const ErrorResponse = t.Object({ error: t.String() });
 
 const SearchHitSchema = t.Object(
   {
@@ -117,6 +116,7 @@ export function searchApiRoutes(
   cache?: Cache | null,
 ) {
   return new Elysia({ name: "routes.search-api" })
+    .use(models)
     .resolve(({ params }) => {
       const handle = (params as Record<string, string>).handle ?? "";
       return {
@@ -399,8 +399,8 @@ export function searchApiRoutes(
         }),
         response: {
           200: SearchResultSchema,
-          400: ErrorResponse,
-          404: ErrorResponse,
+          400: "error",
+          404: "error",
         },
         detail: {
           summary: "Search an index",
@@ -533,7 +533,7 @@ export function searchApiRoutes(
                 "Autocomplete response with document hits and facet value matches",
             },
           ),
-          404: ErrorResponse,
+          404: "error",
         },
         detail: {
           summary: "Autocomplete search",
@@ -581,7 +581,7 @@ export function searchApiRoutes(
           200: t.Record(t.String(), t.Unknown(), {
             description: "The full document with all indexed fields",
           }),
-          404: ErrorResponse,
+          404: "error",
         },
         detail: {
           summary: "Get a document",
@@ -638,7 +638,7 @@ export function searchApiRoutes(
             description:
               "Elasticsearch index mapping showing field names, types, and analyzers",
           }),
-          404: ErrorResponse,
+          404: "error",
         },
         detail: {
           summary: "Get index mapping",
@@ -673,7 +673,7 @@ export function searchApiRoutes(
           200: t.Record(t.String(), t.Unknown(), {
             description: "Raw Elasticsearch search response",
           }),
-          404: ErrorResponse,
+          404: "error",
         },
         detail: {
           summary: "Raw query",
@@ -763,8 +763,8 @@ export function searchApiRoutes(
                 "Matching facet values with document counts, filtered by the optional query",
             },
           ),
-          400: ErrorResponse,
-          404: ErrorResponse,
+          400: "error",
+          404: "error",
         },
         detail: {
           summary: "Search facet values",
