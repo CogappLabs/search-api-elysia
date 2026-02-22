@@ -3,7 +3,9 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.ts";
+import { createEngine } from "../src/engines/index.ts";
 import { deriveFromFields } from "../src/index.ts";
+import type { IndexConfig } from "../src/types.ts";
 
 function writeTempConfig(content: string): string {
   const dir = mkdtempSync(join(tmpdir(), "search-api-test-"));
@@ -55,6 +57,52 @@ indexes:
     indexName: my_index
 `);
     expect(() => loadConfig(path)).toThrow();
+  });
+
+  it("accepts opensearch engine type", () => {
+    const path = writeTempConfig(`
+indexes:
+  test:
+    engine: opensearch
+    host: https://opensearch.example.com
+    indexName: my_index
+`);
+    const config = loadConfig(path);
+    expect(config.indexes.test?.engine).toBe("opensearch");
+  });
+
+  it("accepts meilisearch engine type", () => {
+    const path = writeTempConfig(`
+indexes:
+  test:
+    engine: meilisearch
+    host: http://localhost:7700
+    indexName: my_index
+`);
+    const config = loadConfig(path);
+    expect(config.indexes.test?.engine).toBe("meilisearch");
+  });
+
+  it("accepts mixed engine types across indexes", () => {
+    const path = writeTempConfig(`
+indexes:
+  es_index:
+    engine: elasticsearch
+    host: https://es.example.com
+    indexName: index_a
+  os_index:
+    engine: opensearch
+    host: https://os.example.com
+    indexName: index_b
+  ms_index:
+    engine: meilisearch
+    host: http://localhost:7700
+    indexName: index_c
+`);
+    const config = loadConfig(path);
+    expect(config.indexes.es_index?.engine).toBe("elasticsearch");
+    expect(config.indexes.os_index?.engine).toBe("opensearch");
+    expect(config.indexes.ms_index?.engine).toBe("meilisearch");
   });
 
   it("throws for missing required fields", () => {
@@ -283,5 +331,41 @@ describe("deriveFromFields", () => {
         nation: { esField: "placeCountry" },
       }),
     ).toThrow('both map to ES field "placeCountry"');
+  });
+});
+
+describe("createEngine factory", () => {
+  const baseConfig: IndexConfig = {
+    engine: "elasticsearch",
+    host: "http://localhost:9200",
+    indexName: "test_index",
+  };
+
+  it("creates an ElasticsearchEngine", () => {
+    const engine = createEngine({ ...baseConfig, engine: "elasticsearch" });
+    expect(engine).toBeDefined();
+    expect(engine.search).toBeInstanceOf(Function);
+  });
+
+  it("creates an OpenSearchEngine", () => {
+    const engine = createEngine({ ...baseConfig, engine: "opensearch" });
+    expect(engine).toBeDefined();
+    expect(engine.search).toBeInstanceOf(Function);
+  });
+
+  it("creates a MeilisearchEngine", () => {
+    const engine = createEngine({
+      ...baseConfig,
+      engine: "meilisearch",
+      host: "http://localhost:7700",
+    });
+    expect(engine).toBeDefined();
+    expect(engine.search).toBeInstanceOf(Function);
+  });
+
+  it("throws for unknown engine type", () => {
+    expect(() => createEngine({ ...baseConfig, engine: "solr" })).toThrow(
+      "Unknown engine type: solr",
+    );
   });
 });

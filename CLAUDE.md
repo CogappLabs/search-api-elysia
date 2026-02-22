@@ -21,11 +21,16 @@ bun run docs:build                # build docs for production
 
 ## Overview
 
-Bun + Elysia search API that provides a unified REST interface over external search engine indexes (currently Elasticsearch). Configuration is YAML-driven — each configured index gets its own set of routes under `/:handle/`.
+Bun + Elysia search API that provides a unified REST interface over external search engine indexes (Elasticsearch, OpenSearch, and Meilisearch). Configuration is YAML-driven — each configured index gets its own set of routes under `/:handle/`.
 
 ## Architecture
 
-**Engine abstraction** (`src/engines/`): `SearchEngine` interface in `engine.ts` defines `search()`, `getDocument()`, `searchFacetValues()`, `getMapping()`, and `rawQuery()`. `ElasticsearchEngine` implements it. New engines are registered in the factory map in `engines/index.ts`. See `docs/src/content/docs/guides/adding-an-engine.mdx` for the full guide.
+**Engine abstraction** (`src/engines/`): `SearchEngine` interface in `engine.ts` defines `search()`, `getDocument()`, `searchFacetValues()`, `getMapping()`, and `rawQuery()`. Three engines are implemented:
+
+- `ElasticsearchEngine` and `OpenSearchEngine` both extend `ElasticCompatEngine` (shared base class in `elastic-compat.ts`) — identical query DSL, subclasses only differ in client construction and response unwrapping (ES v8 returns body directly, OpenSearch wraps in `.body`).
+- `MeilisearchEngine` implements `SearchEngine` directly — fundamentally different API (string-based filters, `facetDistribution` for facets, `_formatted` for highlights). Does not support histogram, geoGrid, or suggest (returns empty defaults). Boosts/searchableFields are managed at Meilisearch index level, not per-query. Multi-index arrays are rejected at construction time.
+
+New engines are registered in the factory map in `engines/index.ts`. See `docs/src/content/docs/guides/adding-an-engine.mdx` for the full guide.
 
 **Routes as Elysia plugins** (`src/routes/`): Route files export factory functions that accept runtime dependencies (engine map, config map, alias maps, boosts maps, searchable fields maps) and return Elysia plugin instances. `search-api.ts` has the main endpoints (search, autocomplete, documents, facets). `indexes.ts` lists configured indexes.
 
@@ -42,7 +47,7 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 
 **Geo utilities** (`src/geo.ts`): `geotileToLatLng()` converts ES geotile grid keys (`zoom/x/y`) to lat/lng centroids via Web Mercator tile math.
 
-**Field aliases** (`src/field-aliases.ts`): `FieldAliasMap` class provides bidirectional alias↔ES field name translation. Used at the route layer — inbound params are translated to ES names before the engine call, outbound response keys are translated back. Zero-overhead passthrough when no aliases are configured. Duplicate `esField` targets are rejected at startup.
+**Field aliases** (`src/field-aliases.ts`): `FieldAliasMap` class provides bidirectional alias↔field name translation. Used at the route layer — inbound params are translated before the engine call, outbound response keys are translated back. Zero-overhead passthrough when no aliases are configured. Duplicate `esField` targets are rejected at startup. The `esField` config key name is ES-specific but the alias mechanism works identically for all engines.
 
 **Request flow**: `src/index.ts` loads config → calls `deriveFromFields()` per index → creates engine instances, `FieldAliasMap` instances, and derived boost/searchable maps → mounts routes → applies bearer token auth (optional), CORS, and error handling as Elysia middleware.
 

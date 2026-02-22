@@ -44,16 +44,22 @@ indexes:
 
 | Setting     | Type                 | Required | Description                              |
 | ----------- | -------------------- | -------- | ---------------------------------------- |
-| `engine`    | `"elasticsearch"`    | Yes      | Search engine type                       |
-| `host`      | `string`             | Yes      | Elasticsearch host URL                   |
-| `apiKey`    | `string?`            | No       | ES API key (use this or username/password)|
-| `username`  | `string?`            | No       | ES basic auth username                   |
-| `password`  | `string?`            | No       | ES basic auth password                   |
-| `indexName` | `string \| string[]` | Yes      | ES index name(s)                         |
+| `engine`    | `"elasticsearch" \| "opensearch" \| "meilisearch"` | Yes | Search engine backend |
+| `host`      | `string`             | Yes      | Search engine host URL                   |
+| `apiKey`    | `string?`            | No       | API key (ES apiKey auth, or Meilisearch API key) |
+| `username`  | `string?`            | No       | Basic auth username (ES, OpenSearch)     |
+| `password`  | `string?`            | No       | Basic auth password (ES, OpenSearch)     |
+| `indexName` | `string \| string[]` | Yes      | Index name(s). Multi-index arrays are supported by ES/OpenSearch; Meilisearch uses only the first entry. |
+
+### Engine-specific notes
+
+- **Elasticsearch**: Supports `apiKey` or `username`/`password` auth. Full feature support including histograms, geo grid, and phrase suggestions.
+- **OpenSearch**: Uses the same query DSL as Elasticsearch. Supports `username`/`password` auth only (the OpenSearch JS client does not support `apiKey` auth). Full feature support.
+- **Meilisearch**: Uses `apiKey` for auth. Filters use Meilisearch string syntax (translated automatically). Histograms, geo grid, and phrase suggestions are not supported and return empty/default values. Boosts and `searchableFields` are managed at the Meilisearch index level, not at query time.
 
 ### Multi-index search
 
-Pass an array to `indexName` to search across multiple Elasticsearch indexes with a single handle. Results are unified and relevance-ranked. Each hit includes an `_index` field identifying its source.
+Pass an array to `indexName` to search across multiple Elasticsearch/OpenSearch indexes with a single handle. Results are unified and relevance-ranked. Each hit includes an `_index` field identifying its source. Meilisearch uses only the first entry in the array.
 
 ```yaml
 indexes:
@@ -114,7 +120,7 @@ indexes:
 | ------------ | --------- | --------------------------------------------------------------------------- |
 | `weight`     | `number?` | Boost weight for relevance scoring. Implies the field is searchable.        |
 | `searchable` | `boolean?`| Include in search queries without boosting. Only applies when `weight` is not set. |
-| `esField`    | `string?` | Maps this key as a consumer-friendly alias to the real ES field name.       |
+| `esField`    | `string?` | Maps this key as a consumer-friendly alias to the real field name. Despite the name, works with all engines — aliasing operates at the API route layer before reaching the engine. |
 
 ### How field properties interact
 
@@ -160,8 +166,19 @@ indexes:
         esField: placeRegion
 
   catalogue:
-    engine: elasticsearch
-    host: ${ES_HOST}
-    apiKey: ${ES_API_KEY}
+    engine: opensearch
+    host: ${OS_HOST}
+    username: ${OS_USERNAME}
+    password: ${OS_PASSWORD}
     indexName: library_catalogue
+
+  products:
+    engine: meilisearch
+    host: ${MEILI_HOST}
+    apiKey: ${MEILI_API_KEY}
+    indexName: products
+    defaults:
+      perPage: 20
+      facets:
+        - category
 ```

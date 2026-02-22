@@ -59,7 +59,7 @@
         "engine": {
           "type": "string",
           "description": "Search engine backend to use for this index.",
-          "enum": ["elasticsearch"]
+          "enum": ["elasticsearch", "opensearch", "meilisearch"]
         },
         "host": {
           "type": "string",

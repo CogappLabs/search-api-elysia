@@ -1,16 +1,17 @@
 # Search API
 
-A unified REST search interface over Elasticsearch indexes, built with [Bun](https://bun.sh) and [Elysia](https://elysiajs.com).
+A unified REST search interface over Elasticsearch, OpenSearch, and Meilisearch indexes, built with [Bun](https://bun.sh) and [Elysia](https://elysiajs.com).
 
 **[Documentation](https://cogapplabs.github.io/search-api-elysia/)**
 
 ## Features
 
+- Multiple search engine backends: Elasticsearch, OpenSearch, Meilisearch
 - Search, autocomplete, facets, documents, histograms, and geo grid endpoints
 - Unified field configuration (boost weights, searchable fields, field aliases)
 - YAML-driven config with environment variable interpolation
 - Bearer token authentication and CORS
-- Multi-index search support
+- Multi-index search support (Elasticsearch, OpenSearch)
 
 ## Quick start
 

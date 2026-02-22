@@ -1,11 +1,23 @@
 ---
 title: Adding a Search Engine
-description: How to add a new search engine backend (e.g. Meilisearch, Typesense).
+description: How to add a new search engine backend (e.g. Typesense).
 ---
 
-The API uses an engine abstraction that makes it straightforward to add new search backends. Currently only Elasticsearch is implemented, but the pattern is designed for extension.
+The API uses an engine abstraction that makes it straightforward to add new search backends. Three engines are currently implemented: Elasticsearch, OpenSearch, and Meilisearch.
 
-## Overview
+## Architecture
+
+Elasticsearch and OpenSearch share a base class (`ElasticCompatEngine`) since they use an identical query DSL. Subclasses only differ in client construction and response unwrapping. Meilisearch implements `SearchEngine` directly because its API model is fundamentally different.
+
+```
+SearchEngine (interface)
+├── ElasticCompatEngine (abstract)
+│   ├── ElasticsearchEngine
+│   └── OpenSearchEngine
+└── MeilisearchEngine
+```
+
+## Adding a new engine
 
 Adding a new engine requires three changes:
 
@@ -13,9 +25,9 @@ Adding a new engine requires three changes:
 2. Register it in the engine factory map
 3. Add the engine name to the config schema
 
-## Step 1: Implement SearchEngine
+### Step 1: Implement SearchEngine
 
-Create a new file in `src/engines/` (e.g. `meilisearch.ts`). Your class must implement all five methods from `src/engines/engine.ts`:
+Create a new file in `src/engines/` (e.g. `typesense.ts`). Your class must implement all five methods from `src/engines/engine.ts`:
 
 ```typescript
 import type {
@@ -38,7 +50,7 @@ export interface SearchEngine {
 }
 ```
 
-### Method details
+#### Method details
 
 | Method | Purpose |
 | --- | --- |
@@ -50,28 +62,37 @@ export interface SearchEngine {
 
 Your constructor receives the full `IndexConfig` and should extract what it needs (host, auth, index name).
 
-See `src/engines/elasticsearch.ts` for a complete reference implementation.
+If your engine uses the Elasticsearch query DSL (like OpenSearch does), consider extending `ElasticCompatEngine` instead — see `src/engines/elasticsearch.ts` and `src/engines/opensearch.ts` for examples of thin subclasses.
 
-## Step 2: Register the engine
+For engines with a completely different API model, implement `SearchEngine` directly — see `src/engines/meilisearch.ts`.
+
+### Step 2: Register the engine
 
 Add your engine to the factory map in `src/engines/index.ts`:
 
 ```typescript
-import { MeilisearchEngine } from "./meilisearch.ts";
+import { TypesenseEngine } from "./typesense.ts";
 
 const engineFactories: Record<string, (config: IndexConfig) => SearchEngine> = {
   elasticsearch: (config) => new ElasticsearchEngine(config),
+  opensearch: (config) => new OpenSearchEngine(config),
   meilisearch: (config) => new MeilisearchEngine(config),
+  typesense: (config) => new TypesenseEngine(config),
 };
 ```
 
-## Step 3: Update the config schema
+### Step 3: Update the config schema
 
 Add the new engine name as a valid literal in `src/config.ts`:
 
 ```typescript
 const IndexConfigSchema = t.Object({
-  engine: t.Union([t.Literal("elasticsearch"), t.Literal("meilisearch")]),
+  engine: t.Union([
+    t.Literal("elasticsearch"),
+    t.Literal("opensearch"),
+    t.Literal("meilisearch"),
+    t.Literal("typesense"),
+  ]),
   // ...
 });
 ```
@@ -81,7 +102,7 @@ Also update `schemas/config.schema.json` to include the new engine in the `enum`
 ```json
 "engine": {
   "type": "string",
-  "enum": ["elasticsearch", "meilisearch"]
+  "enum": ["elasticsearch", "opensearch", "meilisearch", "typesense"]
 }
 ```
 
@@ -89,5 +110,7 @@ Also update `schemas/config.schema.json` to include the new engine in the `enum`
 
 - The `SearchEngine` interface is engine-agnostic. All engine-specific logic stays inside the engine class.
 - Auth fields on `IndexConfig` (`apiKey`, `username`, `password`) are shared. If your engine needs different auth, you can use these same fields or extend `IndexConfig` with engine-specific options.
-- The `fields` config, alias maps, boosts, and searchable fields are all resolved at the route layer before reaching the engine. Your engine receives pre-translated ES field names via `SearchOptions`.
+- The `fields` config, alias maps, boosts, and searchable fields are all resolved at the route layer before reaching the engine. Your engine receives pre-translated field names via `SearchOptions`.
+- The `esField` config property name is ES-specific but the alias mechanism operates at the route layer before any engine is called. It works identically for all engines.
 - The `rawQuery` endpoint passes the body directly — document the expected format for your engine.
+- Features your engine doesn't support (e.g. histograms, geoGrid, suggest) should return graceful defaults (empty arrays/objects, `undefined`).

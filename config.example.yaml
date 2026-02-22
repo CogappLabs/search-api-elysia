@@ -59,3 +59,24 @@ indexes:
   #   indexName:
   #     - museum_collections
   #     - library_catalogue
+
+  # OpenSearch example: uses the same query DSL as Elasticsearch.
+  # Auth: username/password only (no apiKey support in the OpenSearch JS client).
+  # opensearch_index:
+  #   engine: opensearch
+  #   host: https://opensearch.example.com
+  #   username: ${OS_USERNAME}
+  #   password: ${OS_PASSWORD}
+  #   indexName: my_opensearch_index
+
+  # Meilisearch example: string-based filters, facetDistribution for facets.
+  # No histogram, geoGrid, or suggest support.
+  # meili_index:
+  #   engine: meilisearch
+  #   host: http://localhost:7700
+  #   apiKey: ${MEILI_API_KEY}
+  #   indexName: my_meili_index
+  #   defaults:
+  #     perPage: 20
+  #     facets:
+  #       - category

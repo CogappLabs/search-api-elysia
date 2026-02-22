@@ -19,7 +19,11 @@ const FieldConfigSchema = t.Object({
 });
 
 const IndexConfigSchema = t.Object({
-  engine: t.Union([t.Literal("elasticsearch")]),
+  engine: t.Union([
+    t.Literal("elasticsearch"),
+    t.Literal("opensearch"),
+    t.Literal("meilisearch"),
+  ]),
   host: t.String(),
   apiKey: t.Optional(t.String()),
   username: t.Optional(t.String()),
