@@ -6,7 +6,10 @@ import type { IndexConfig } from "../src/types.ts";
 // biome-ignore lint/suspicious/noExplicitAny: mock client captures raw ES request bodies
 let lastSearchBody: any;
 
-function createMockClient(aggregations?: Record<string, unknown>) {
+function createMockClient(
+  aggregations?: Record<string, unknown>,
+  mappingProperties?: Record<string, unknown>,
+) {
   lastSearchBody = undefined;
   return {
     search: async (body: unknown) => {
@@ -18,6 +21,17 @@ function createMockClient(aggregations?: Record<string, unknown>) {
         },
         aggregations: aggregations ?? {},
       };
+    },
+    indices: {
+      getMapping: async () => ({
+        test_index: {
+          mappings: {
+            properties: mappingProperties ?? {
+              title: { type: "text" },
+            },
+          },
+        },
+      }),
     },
   } as unknown as Client;
 }
@@ -442,6 +456,80 @@ describe("ElasticsearchEngine geo grid", () => {
     expect(cluster?.hit).toBeDefined();
     expect(cluster?.hit?.objectID).toBe("42");
     expect((cluster?.hit as Record<string, unknown>)?.title).toBe("London");
+  });
+});
+
+describe("ElasticsearchEngine sort field resolution", () => {
+  it("appends .keyword when sorting on a text field with keyword sub-field", async () => {
+    const client = createMockClient(undefined, {
+      title: {
+        type: "text",
+        fields: { keyword: { type: "keyword", ignore_above: 256 } },
+      },
+    });
+    const engine = createEngine(client);
+    await engine.search("", { sort: { title: "asc" } });
+    expect(lastSearchBody.sort).toEqual([
+      { "title.keyword": { order: "asc" } },
+    ]);
+  });
+
+  it("does not append .keyword for a keyword field", async () => {
+    const client = createMockClient(undefined, {
+      status: { type: "keyword" },
+    });
+    const engine = createEngine(client);
+    await engine.search("", { sort: { status: "asc" } });
+    expect(lastSearchBody.sort).toEqual([{ status: { order: "asc" } }]);
+  });
+
+  it("does not append .keyword for a numeric field", async () => {
+    const client = createMockClient(undefined, {
+      price: { type: "float" },
+    });
+    const engine = createEngine(client);
+    await engine.search("", { sort: { price: "desc" } });
+    expect(lastSearchBody.sort).toEqual([{ price: { order: "desc" } }]);
+  });
+
+  it("does not append .keyword for a text field without keyword sub-field", async () => {
+    const client = createMockClient(undefined, {
+      description: { type: "text" },
+    });
+    const engine = createEngine(client);
+    await engine.search("", { sort: { description: "asc" } });
+    expect(lastSearchBody.sort).toEqual([{ description: { order: "asc" } }]);
+  });
+
+  it("caches the mapping across multiple search calls", async () => {
+    let getMappingCalls = 0;
+    const client = {
+      search: async (body: unknown) => {
+        lastSearchBody = body;
+        return { hits: { total: { value: 0 }, hits: [] }, aggregations: {} };
+      },
+      indices: {
+        getMapping: async () => {
+          getMappingCalls++;
+          return {
+            test_index: {
+              mappings: {
+                properties: {
+                  title: {
+                    type: "text",
+                    fields: { keyword: { type: "keyword" } },
+                  },
+                },
+              },
+            },
+          };
+        },
+      },
+    } as unknown as Client;
+    const engine = createEngine(client);
+    await engine.search("", { sort: { title: "asc" } });
+    await engine.search("", { sort: { title: "desc" } });
+    expect(getMappingCalls).toBe(1);
   });
 });
 

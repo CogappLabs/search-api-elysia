@@ -1,7 +1,9 @@
 import { Elysia, status, t } from "elysia";
+import type { Cache } from "../cache.ts";
+import { buildSearchCacheKey } from "../cache.ts";
 import type { SearchEngine } from "../engines/engine.ts";
 import { FieldAliasMap } from "../field-aliases.ts";
-import type { IndexConfig, SearchOptions } from "../types.ts";
+import type { IndexConfig, SearchOptions, SearchResult } from "../types.ts";
 import {
   BoostsSchema,
   FacetFiltersSchema,
@@ -113,6 +115,7 @@ export function searchApiRoutes(
   aliasMaps?: Map<string, FieldAliasMap>,
   boostsMaps?: Map<string, Record<string, number>>,
   searchableFieldsMaps?: Map<string, string[]>,
+  cache?: Cache | null,
 ) {
   return new Elysia({ name: "routes.search-api" })
     .resolve(({ params }) => {
@@ -247,6 +250,19 @@ export function searchApiRoutes(
             };
         }
 
+        // Check cache
+        const cacheKey = cache
+          ? buildSearchCacheKey(
+              params.handle,
+              query.q ?? "",
+              options as unknown as Record<string, unknown>,
+            )
+          : null;
+        if (cache && cacheKey) {
+          const cached = await cache.get<SearchResult>(cacheKey);
+          if (cached) return cached;
+        }
+
         const searchResult = await engine.search(query.q ?? "", options);
 
         // Outbound alias translation
@@ -268,6 +284,11 @@ export function searchApiRoutes(
               }
             }
           }
+        }
+
+        // Store in cache (fire-and-forget)
+        if (cache && cacheKey) {
+          cache.set(cacheKey, searchResult, 60);
         }
 
         return searchResult;
@@ -578,7 +599,20 @@ export function searchApiRoutes(
           });
         }
 
-        return await engine.getMapping();
+        const mappingCacheKey = `mapping:${params.handle}`;
+        if (cache) {
+          const cached =
+            await cache.get<Record<string, unknown>>(mappingCacheKey);
+          if (cached) return cached;
+        }
+
+        const mapping = await engine.getMapping();
+
+        if (cache) {
+          cache.set(mappingCacheKey, mapping, 3600);
+        }
+
+        return mapping;
       },
       {
         params: t.Object({
@@ -734,6 +768,30 @@ export function searchApiRoutes(
             '- `GET /:handle/facets/placeRegion?filters={"placeCountry":"Scotland"}` — regions within Scotland only',
           ].join("\n"),
           tags: ["Facets"],
+        },
+      },
+    )
+    .post(
+      "/cache/clear",
+      async () => {
+        if (!cache) {
+          return { cleared: false, message: "No cache configured" };
+        }
+        await cache.flush();
+        return { cleared: true };
+      },
+      {
+        response: {
+          200: t.Object({
+            cleared: t.Boolean(),
+            message: t.Optional(t.String()),
+          }),
+        },
+        detail: {
+          summary: "Clear cache",
+          description:
+            "Flushes all cached search and mapping responses from Redis. Protected by bearer token auth.",
+          tags: ["System"],
         },
       },
     );

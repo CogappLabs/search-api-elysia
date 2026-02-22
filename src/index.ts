@@ -1,6 +1,7 @@
 import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
 import { Elysia, status as httpStatus, t } from "elysia";
+import { createCache } from "./cache.ts";
 import { loadConfig } from "./config.ts";
 import type { SearchEngine } from "./engines/engine.ts";
 import { createEngine } from "./engines/index.ts";
@@ -47,6 +48,13 @@ try {
 } catch (err) {
   console.error(err instanceof Error ? err.message : "Failed to load config");
   process.exit(1);
+}
+
+const cache = createCache(process.env.REDIS_URL);
+if (cache) {
+  console.log("Redis cache connected");
+} else {
+  console.log("Redis cache disabled (no REDIS_URL)");
 }
 
 const engines = new Map<string, SearchEngine>();
@@ -107,10 +115,19 @@ const app = new Elysia()
       error: "message" in error ? error.message : "Internal server error",
     };
   })
-  .get("/health", () => ({ status: "ok" }), {
-    response: { 200: t.Object({ status: t.String() }) },
-    detail: { summary: "Health check", tags: ["System"] },
-  })
+  .get(
+    "/health",
+    () => ({
+      status: "ok",
+      cache: cache ? (cache.isConnected ? "connected" : "error") : "disabled",
+    }),
+    {
+      response: {
+        200: t.Object({ status: t.String(), cache: t.String() }),
+      },
+      detail: { summary: "Health check", tags: ["System"] },
+    },
+  )
   .use(indexesRoute(config))
   .use(
     searchApiRoutes(
@@ -119,6 +136,7 @@ const app = new Elysia()
       aliasMaps,
       boostsMaps,
       searchableFieldsMaps,
+      cache,
     ),
   )
   .listen(config.port);

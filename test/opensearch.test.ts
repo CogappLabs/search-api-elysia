@@ -144,6 +144,35 @@ describe("OpenSearchEngine rawQuery", () => {
   });
 });
 
+describe("OpenSearchEngine sort field resolution", () => {
+  it("appends .keyword when sorting on a text field with keyword sub-field", async () => {
+    const client = {
+      ...createMockClient(),
+      indices: {
+        getMapping: async () => ({
+          body: {
+            test_index: {
+              mappings: {
+                properties: {
+                  title: {
+                    type: "text",
+                    fields: { keyword: { type: "keyword", ignore_above: 256 } },
+                  },
+                },
+              },
+            },
+          },
+        }),
+      },
+    } as unknown as ElasticCompatClient;
+    const engine = createEngine(client);
+    await engine.search("", { sort: { title: "asc" } });
+    expect(lastSearchBody.sort).toEqual([
+      { "title.keyword": { order: "asc" } },
+    ]);
+  });
+});
+
 describe("OpenSearchEngine apiKey validation", () => {
   it("throws when apiKey is set without username", () => {
     expect(() => {

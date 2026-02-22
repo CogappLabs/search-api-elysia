@@ -32,6 +32,7 @@ export abstract class ElasticCompatEngine implements SearchEngine {
   protected client: ElasticCompatClient;
   protected indexName: string;
   protected suggestField: string | undefined;
+  private mappingCache: Record<string, unknown> | null = null;
 
   constructor(config: IndexConfig, client?: ElasticCompatClient) {
     this.client = client ?? this.createClient(config);
@@ -127,11 +128,13 @@ export abstract class ElasticCompatEngine implements SearchEngine {
       });
     }
 
-    // Sort
+    // Sort — resolve text fields to .keyword sub-fields
     const sort: Record<string, unknown>[] = [];
     if (options.sort) {
+      const mapping = await this.ensureMapping();
       for (const [field, order] of Object.entries(options.sort)) {
-        sort.push({ [field]: { order } });
+        const resolved = resolveSortField(field, mapping);
+        sort.push({ [resolved]: { order } });
       }
     }
 
@@ -464,10 +467,18 @@ export abstract class ElasticCompatEngine implements SearchEngine {
   }
 
   async getMapping(): Promise<Record<string, unknown>> {
-    const rawResponse = await this.client.indices.getMapping({
-      index: this.indexName,
-    });
-    return this.extractBody<Record<string, unknown>>(rawResponse);
+    return this.ensureMapping();
+  }
+
+  private async ensureMapping(): Promise<Record<string, unknown>> {
+    if (!this.mappingCache) {
+      const rawResponse = await this.client.indices.getMapping({
+        index: this.indexName,
+      });
+      this.mappingCache =
+        this.extractBody<Record<string, unknown>>(rawResponse);
+    }
+    return this.mappingCache;
   }
 
   async rawQuery(
@@ -535,6 +546,40 @@ export abstract class ElasticCompatEngine implements SearchEngine {
       count: b.doc_count,
     }));
   }
+}
+
+/**
+ * Resolve a sort field name: if the field is type `text` with a `.keyword`
+ * sub-field in the mapping, return `field.keyword`; otherwise return as-is.
+ */
+function resolveSortField(
+  field: string,
+  mapping: Record<string, unknown>,
+): string {
+  // Walk into the first index's mappings.properties
+  for (const indexMapping of Object.values(mapping)) {
+    const props = (indexMapping as Record<string, unknown>)?.mappings as
+      | Record<string, unknown>
+      | undefined;
+    const properties = props?.properties as Record<string, unknown> | undefined;
+    if (!properties) continue;
+
+    const fieldMapping = properties[field] as
+      | Record<string, unknown>
+      | undefined;
+    if (!fieldMapping) continue;
+
+    if (fieldMapping.type === "text") {
+      const subFields = fieldMapping.fields as
+        | Record<string, unknown>
+        | undefined;
+      if (subFields?.keyword) {
+        return `${field}.keyword`;
+      }
+    }
+    return field;
+  }
+  return field;
 }
 
 function isRangeFilter(

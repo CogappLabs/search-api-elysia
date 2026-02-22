@@ -10,6 +10,10 @@ port: ${PORT:-3000}
 # Can also be set via API_KEY env var.
 # apiKey: ${API_KEY}
 
+# Optional Redis cache. Set REDIS_URL env var to enable response caching.
+# Search results are cached for 60s, mapping responses for 1h.
+# Example: REDIS_URL=redis://default:password@redis.railway.internal:6379
+
 # Optional CORS allowed origins (omit to disable CORS).
 # corsOrigins: "*"            # Allow all origins
 # corsOrigins:                # Or allow specific origins
