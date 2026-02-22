@@ -1,60 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { FacetValue, SearchResult } from "./shared";
-import {
-  DEFAULT_ENDPOINT,
-  hitDisplayText,
-  searchApi,
-  stripHtml,
-} from "./shared";
-
-const STORAGE_KEY = "search-api-demo";
-
-function loadConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function saveConfig(cfg: Record<string, string>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
-}
+import { INPUT_CLASS, searchApi, useAbortRef, useApiConfig } from "./shared";
+import { ErrorAlert, HitListItem } from "./shared-ui";
 
 export default function FacetSearchDemo() {
-  const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
-  const [index, setIndex] = useState(
-    stored.index ?? "craft_search_plugin_labs",
-  );
-  const [token, setToken] = useState(stored.token ?? "");
+  const { endpoint, index, token, configProps } = useApiConfig();
   const [query, setQuery] = useState("");
   const [facetField, setFacetField] = useState("country");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<SearchResult | null>(null);
   const [facetValues, setFacetValues] = useState<FacetValue[]>([]);
   const [error, setError] = useState("");
-  const abortRef = useRef<AbortController | null>(null);
-
-  const updateEndpoint = (v: string) => {
-    setEndpoint(v);
-    saveConfig({ ...loadConfig(), endpoint: v });
-  };
-  const updateIndex = (v: string) => {
-    setIndex(v);
-    saveConfig({ ...loadConfig(), index: v });
-  };
-  const updateToken = (v: string) => {
-    setToken(v);
-    saveConfig({ ...loadConfig(), token: v });
-  };
+  const newController = useAbortRef();
 
   const doSearch = useCallback(
     (q: string, field: string, sel: Set<string>) => {
-      abortRef.current?.abort();
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
+      const ctrl = newController();
       setError("");
 
       const params: Record<string, string> = {
@@ -88,17 +50,13 @@ export default function FacetSearchDemo() {
           setError(err.message);
         });
     },
-    [endpoint, index, token],
+    [endpoint, index, token, newController],
   );
 
   useEffect(() => {
     const t = setTimeout(() => doSearch(query, facetField, selected), 300);
     return () => clearTimeout(t);
   }, [query, facetField, selected, doSearch]);
-
-  useEffect(() => {
-    return () => abortRef.current?.abort();
-  }, []);
 
   const toggleFacet = (value: string) => {
     setSelected((prev) => {
@@ -111,21 +69,14 @@ export default function FacetSearchDemo() {
 
   return (
     <div className="not-content mt-8">
-      <ApiConfig
-        endpoint={endpoint}
-        index={index}
-        token={token}
-        onEndpointChange={updateEndpoint}
-        onIndexChange={updateIndex}
-        onTokenChange={updateToken}
-      />
+      <ApiConfig {...configProps} />
       <div className="mb-4 flex gap-3">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search..."
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className={`flex-1 ${INPUT_CLASS}`}
         />
         <input
           type="text"
@@ -135,17 +86,10 @@ export default function FacetSearchDemo() {
             setSelected(new Set());
           }}
           placeholder="Facet field"
-          className="w-40 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className={`w-40 ${INPUT_CLASS}`}
         />
       </div>
-      {error && (
-        <p
-          role="alert"
-          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        >
-          {error}
-        </p>
-      )}
+      <ErrorAlert error={error} />
       {result && (
         <div className="flex gap-6">
           {facetValues.length > 0 && (
@@ -179,22 +123,7 @@ export default function FacetSearchDemo() {
             </p>
             <ul className="space-y-2">
               {result.hits.map((hit) => (
-                <li
-                  key={hit.objectID}
-                  className="rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {stripHtml(hitDisplayText(hit))}
-                    </span>
-                    <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                      {hit._score?.toFixed(1) ?? "—"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {hit.objectID}
-                  </p>
-                </li>
+                <HitListItem key={hit.objectID} hit={hit} />
               ))}
             </ul>
           </div>

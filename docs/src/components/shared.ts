@@ -1,6 +1,72 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
 export const DEFAULT_ENDPOINT = import.meta.env.DEV
   ? "http://localhost:3000"
   : "https://search-api-elysia-production.up.railway.app";
+
+const STORAGE_KEY = "search-api-demo";
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {};
+}
+
+function saveConfig(cfg: Record<string, string>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+}
+
+export function useApiConfig() {
+  const stored = loadConfig();
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
+  const [index, setIndex] = useState(
+    stored.index ?? "craft_search_plugin_labs",
+  );
+  const [token, setToken] = useState(stored.token ?? "");
+
+  const updateEndpoint = (v: string) => {
+    setEndpoint(v);
+    saveConfig({ ...loadConfig(), endpoint: v });
+  };
+  const updateIndex = (v: string) => {
+    setIndex(v);
+    saveConfig({ ...loadConfig(), index: v });
+  };
+  const updateToken = (v: string) => {
+    setToken(v);
+    saveConfig({ ...loadConfig(), token: v });
+  };
+
+  const configProps = {
+    endpoint,
+    index,
+    token,
+    onEndpointChange: updateEndpoint,
+    onIndexChange: updateIndex,
+    onTokenChange: updateToken,
+  };
+
+  return { endpoint, index, token, configProps };
+}
+
+export function useAbortRef() {
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
+  return useCallback(() => {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    return ctrl;
+  }, []);
+}
+
+export const INPUT_CLASS =
+  "rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100";
+
+export const BUTTON_CLASS =
+  "rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700";
 
 export interface SearchHit {
   objectID: string;

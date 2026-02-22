@@ -12,21 +12,8 @@ import {
   Stats,
 } from "react-instantsearch";
 import { ApiConfig } from "./ApiConfig";
-import { DEFAULT_ENDPOINT } from "./shared";
-
-const STORAGE_KEY = "search-api-demo";
-
-function loadConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function saveConfig(cfg: Record<string, string>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
-}
+import { useApiConfig } from "./shared";
+import { ErrorAlert } from "./shared-ui";
 
 const EMPTY_RESULT = {
   hits: [],
@@ -119,27 +106,9 @@ function Hit({ hit }: { hit: Record<string, unknown> }) {
 }
 
 export default function InstantSearchDemo() {
-  const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
-  const [index, setIndex] = useState(
-    stored.index ?? "craft_search_plugin_labs",
-  );
-  const [token, setToken] = useState(stored.token ?? "");
-  const [facetField, setFacetField] = useState(stored.facetField ?? "country");
+  const { endpoint, index, token, configProps } = useApiConfig();
+  const [facetField, setFacetField] = useState("country");
   const [error, setError] = useState("");
-
-  const updateEndpoint = (v: string) => {
-    setEndpoint(v);
-    saveConfig({ ...loadConfig(), endpoint: v });
-  };
-  const updateIndex = (v: string) => {
-    setIndex(v);
-    saveConfig({ ...loadConfig(), index: v });
-  };
-  const updateToken = (v: string) => {
-    setToken(v);
-    saveConfig({ ...loadConfig(), token: v });
-  };
 
   const errorRef = useRef(setError);
   errorRef.current = setError;
@@ -174,14 +143,7 @@ export default function InstantSearchDemo() {
 
   return (
     <div className="not-content mt-8">
-      <ApiConfig
-        endpoint={endpoint}
-        index={index}
-        token={token}
-        onEndpointChange={updateEndpoint}
-        onIndexChange={updateIndex}
-        onTokenChange={updateToken}
-      />
+      <ApiConfig {...configProps} />
 
       <div className="mb-4">
         <label className="flex flex-col gap-1 text-xs text-gray-700 dark:text-gray-300">
@@ -202,14 +164,7 @@ export default function InstantSearchDemo() {
         </label>
       </div>
 
-      {error && (
-        <p
-          role="alert"
-          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        >
-          {error}
-        </p>
-      )}
+      <ErrorAlert error={error} />
 
       <InstantSearch searchClient={searchClient as never} indexName={index}>
         <SearchBox

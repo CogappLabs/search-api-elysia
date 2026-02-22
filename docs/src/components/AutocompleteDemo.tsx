@@ -1,58 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { AutocompleteResult, SearchHit } from "./shared";
-import { DEFAULT_ENDPOINT, searchApi } from "./shared";
+import { INPUT_CLASS, searchApi, useAbortRef, useApiConfig } from "./shared";
+import { ErrorAlert } from "./shared-ui";
 
-const STORAGE_KEY = "search-api-demo";
 const FACET_FIELDS = "placeCountry,placeRegion";
 const FACET_LABELS: Record<string, string> = {
   placeCountry: "Country",
   placeRegion: "Region",
 };
 
-function loadConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function saveConfig(cfg: Record<string, string>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
-}
-
 type Option =
   | { type: "facet"; field: string; value: string; count: number }
   | { type: "hit"; hit: SearchHit };
 
 export default function AutocompleteDemo() {
-  const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
-  const [index, setIndex] = useState(
-    stored.index ?? "craft_search_plugin_labs",
-  );
-  const [token, setToken] = useState(stored.token ?? "");
+  const { endpoint, index, token, configProps } = useApiConfig();
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Option[]>([]);
   const [totalHits, setTotalHits] = useState(0);
   const [error, setError] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const updateEndpoint = (v: string) => {
-    setEndpoint(v);
-    saveConfig({ ...loadConfig(), endpoint: v });
-  };
-  const updateIndex = (v: string) => {
-    setIndex(v);
-    saveConfig({ ...loadConfig(), index: v });
-  };
-  const updateToken = (v: string) => {
-    setToken(v);
-    saveConfig({ ...loadConfig(), token: v });
-  };
+  const newController = useAbortRef();
 
   const doAutocomplete = useCallback(
     (q: string) => {
@@ -62,9 +32,7 @@ export default function AutocompleteDemo() {
         setShowDropdown(false);
         return;
       }
-      abortRef.current?.abort();
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
+      const ctrl = newController();
       setError("");
 
       searchApi<AutocompleteResult>(
@@ -103,17 +71,13 @@ export default function AutocompleteDemo() {
           setShowDropdown(false);
         });
     },
-    [endpoint, index, token],
+    [endpoint, index, token, newController],
   );
 
   useEffect(() => {
     const t = setTimeout(() => doAutocomplete(query), 150);
     return () => clearTimeout(t);
   }, [query, doAutocomplete]);
-
-  useEffect(() => {
-    return () => abortRef.current?.abort();
-  }, []);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!showDropdown || options.length === 0) return;
@@ -131,7 +95,6 @@ export default function AutocompleteDemo() {
   const hitLabel = (hit: SearchHit) =>
     (hit.title as string) ?? (hit.name as string) ?? hit.objectID;
 
-  // Determine where section headers should appear
   const renderItems = () => {
     const elements: React.ReactNode[] = [];
     let lastFacetField: string | null = null;
@@ -197,7 +160,7 @@ export default function AutocompleteDemo() {
               {hitLabel(opt.hit)}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {opt.hit._score?.toFixed(1) ?? "—"}
+              {opt.hit._score?.toFixed(1) ?? "\u2014"}
             </span>
           </div>,
         );
@@ -221,14 +184,7 @@ export default function AutocompleteDemo() {
 
   return (
     <div className="not-content mt-8">
-      <ApiConfig
-        endpoint={endpoint}
-        index={index}
-        token={token}
-        onEndpointChange={updateEndpoint}
-        onIndexChange={updateIndex}
-        onTokenChange={updateToken}
-      />
+      <ApiConfig {...configProps} />
       <div className="relative">
         <input
           type="text"
@@ -238,7 +194,7 @@ export default function AutocompleteDemo() {
           onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
           onKeyDown={onKeyDown}
           placeholder="Start typing (min 2 chars)..."
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className={`w-full ${INPUT_CLASS}`}
         />
         {showDropdown && options.length > 0 && (
           <div className="absolute z-10 mt-1 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
@@ -246,14 +202,7 @@ export default function AutocompleteDemo() {
           </div>
         )}
       </div>
-      {error && (
-        <p
-          role="alert"
-          className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        >
-          {error}
-        </p>
-      )}
+      <ErrorAlert error={error} className="mt-3" />
     </div>
   );
 }
