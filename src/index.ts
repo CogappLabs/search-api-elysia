@@ -128,6 +128,30 @@ const app = new Elysia()
       detail: { summary: "Health check", tags: ["System"] },
     },
   )
+  .post(
+    "/cache/clear",
+    async () => {
+      if (!cache) {
+        return { cleared: false, message: "No cache configured" };
+      }
+      await cache.flush();
+      return { cleared: true };
+    },
+    {
+      response: {
+        200: t.Object({
+          cleared: t.Boolean(),
+          message: t.Optional(t.String()),
+        }),
+      },
+      detail: {
+        summary: "Clear cache",
+        description:
+          "Flushes all cached search and mapping responses from Redis. Protected by bearer token auth.",
+        tags: ["System"],
+      },
+    },
+  )
   .use(indexesRoute(config))
   .use(
     searchApiRoutes(
