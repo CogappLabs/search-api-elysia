@@ -1,47 +1,20 @@
 import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
+import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, status as httpStatus, t } from "elysia";
 import { createCache } from "./cache.ts";
 import { loadConfig } from "./config.ts";
 import type { SearchEngine } from "./engines/engine.ts";
 import { createEngine } from "./engines/index.ts";
 import { FieldAliasMap } from "./field-aliases.ts";
+import { deriveFromFields } from "./fields.ts";
+
+export { deriveFromFields } from "./fields.ts";
+
 import { indexesRoute } from "./routes/indexes.ts";
 import { instantSearchRoutes } from "./routes/instantsearch.ts";
 import { searchApiRoutes } from "./routes/search-api.ts";
-import type { AppConfig, FieldConfig, IndexConfig } from "./types.ts";
-
-export function deriveFromFields(fields?: Record<string, FieldConfig>) {
-  const aliases: Record<string, string> = {};
-  const boosts: Record<string, number> = {};
-  const searchableFields: string[] = [];
-
-  if (!fields) return { aliases, boosts, searchableFields };
-
-  const seenEsFields = new Map<string, string>();
-  for (const [name, cfg] of Object.entries(fields)) {
-    const esName = cfg.esField ?? name;
-
-    if (cfg.esField) {
-      const existing = seenEsFields.get(cfg.esField);
-      if (existing) {
-        throw new Error(
-          `Fields "${existing}" and "${name}" both map to ES field "${cfg.esField}"`,
-        );
-      }
-      seenEsFields.set(cfg.esField, name);
-      aliases[name] = cfg.esField;
-    }
-
-    if (cfg.weight !== undefined) {
-      boosts[esName] = cfg.weight;
-    } else if (cfg.searchable) {
-      searchableFields.push(esName);
-    }
-  }
-
-  return { aliases, boosts, searchableFields };
-}
+import type { AppConfig, IndexConfig } from "./types.ts";
 
 let config: AppConfig;
 try {
@@ -79,6 +52,7 @@ for (const [handle, indexConfig] of Object.entries(config.indexes)) {
 }
 
 const app = new Elysia()
+  .use(serverTiming())
   .use(
     openapi({
       documentation: {
@@ -96,19 +70,6 @@ const app = new Elysia()
       origin: config.corsOrigins === "*" ? true : (config.corsOrigins ?? false),
     }),
   )
-  .onBeforeHandle(({ headers, path }) => {
-    if (path === "/health" || path === "/openapi" || path === "/openapi/json")
-      return;
-
-    const requiredKey = config.apiKey ?? process.env.API_KEY;
-    if (!requiredKey) return;
-
-    const auth = headers.authorization ?? "";
-    const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    if (provided !== requiredKey) {
-      return httpStatus(401, { error: "Unauthorized" });
-    }
-  })
   .mapResponse(({ response, headers, set }) => {
     const accept = headers["accept-encoding"] ?? "";
     if (!accept.includes("gzip")) return;
@@ -144,6 +105,18 @@ const app = new Elysia()
       detail: { summary: "Health check", tags: ["System"] },
     },
   )
+  .guard({
+    beforeHandle({ headers }) {
+      const requiredKey = config.apiKey ?? process.env.API_KEY;
+      if (!requiredKey) return;
+
+      const auth = headers.authorization ?? "";
+      const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      if (provided !== requiredKey) {
+        return httpStatus(401, { error: "Unauthorized" });
+      }
+    },
+  })
   .post(
     "/cache/clear",
     async () => {
@@ -191,5 +164,20 @@ const app = new Elysia()
   .listen(config.port);
 
 console.log(`Search API running at http://localhost:${app.server?.port}`);
+
+// Graceful shutdown
+let isShuttingDown = false;
+
+function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`${signal} received, shutting down gracefully...`);
+  app.stop();
+  console.log("Server stopped");
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export type App = typeof app;

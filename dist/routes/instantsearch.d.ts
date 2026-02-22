@@ -10,6 +10,13 @@ export declare function instantSearchRoutes(engines: Map<string, SearchEngine>, 
 }, {
     typebox: {};
     error: {};
+} & {
+    typebox: {
+        readonly error: import("@sinclair/typebox").TObject<{
+            error: import("@sinclair/typebox").TString;
+        }>;
+    };
+    error: {};
 }, {
     schema: {};
     standaloneSchema: {};
