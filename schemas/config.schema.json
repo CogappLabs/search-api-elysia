@@ -59,7 +59,7 @@
         "engine": {
           "type": "string",
           "description": "Search engine backend to use for this index.",
-          "enum": ["elasticsearch", "opensearch", "meilisearch"]
+          "enum": ["elasticsearch", "opensearch", "meilisearch", "typesense"]
         },
         "host": {
           "type": "string",
@@ -96,6 +96,11 @@
           "additionalProperties": {
             "$ref": "#/$defs/fieldConfig"
           }
+        },
+        "dateFields": {
+          "type": "array",
+          "description": "Field names that contain date values stored as Unix timestamps. Used by the Typesense engine to convert int64 timestamps back to ISO 8601 strings in API responses.",
+          "items": { "type": "string" }
         }
       },
       "required": ["engine", "host", "indexName"],

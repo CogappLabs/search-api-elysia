@@ -5,11 +5,11 @@ description: How to add a new search engine backend (e.g. Typesense).
 
 import { Steps, FileTree } from "@astrojs/starlight/components";
 
-The API uses an engine abstraction that makes it straightforward to add new search backends. Three engines are currently implemented: Elasticsearch, OpenSearch, and Meilisearch.
+The API uses an engine abstraction that makes it straightforward to add new search backends. Four engines are currently implemented: Elasticsearch, OpenSearch, Meilisearch, and Typesense.
 
 ## Architecture
 
-Elasticsearch and OpenSearch share a base class (`ElasticCompatEngine`) since they use an identical query DSL. Subclasses only differ in client construction and response unwrapping. Meilisearch implements `SearchEngine` directly because its API model is fundamentally different.
+Elasticsearch and OpenSearch share a base class (`ElasticCompatEngine`) since they use an identical query DSL. Subclasses only differ in client construction and response unwrapping. Meilisearch and Typesense implement `SearchEngine` directly because their API models are fundamentally different.
 
 <FileTree>
 
@@ -19,6 +19,7 @@ Elasticsearch and OpenSearch share a base class (`ElasticCompatEngine`) since th
   - elasticsearch.ts
   - opensearch.ts
   - meilisearch.ts
+  - typesense.ts
   - **index.ts** engine factory map
 
 </FileTree>

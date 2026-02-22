@@ -71,6 +71,7 @@ const app = new Elysia()
     }),
   )
   .mapResponse(({ response, headers, set }) => {
+    if (process.env.NODE_ENV !== "production") return;
     const accept = headers["accept-encoding"] ?? "";
     if (!accept.includes("gzip")) return;
     if (response instanceof Response) return;

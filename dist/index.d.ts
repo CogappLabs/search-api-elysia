@@ -1,10 +1,5 @@
 import { Elysia } from "elysia";
-import type { FieldConfig } from "./types.ts";
-export declare function deriveFromFields(fields?: Record<string, FieldConfig>): {
-    aliases: Record<string, string>;
-    boosts: Record<string, number>;
-    searchableFields: string[];
-};
+export { deriveFromFields } from "./fields.ts";
 declare const app: Elysia<"", {
     decorator: {};
     store: {};
@@ -488,4 +483,3 @@ declare const app: Elysia<"", {
     response: {};
 }>;
 export type App = typeof app;
-export {};

@@ -61,12 +61,13 @@ indexes:
 
 | Setting     | Type                 | Required | Description                              |
 | ----------- | -------------------- | -------- | ---------------------------------------- |
-| `engine`    | `"elasticsearch" \| "opensearch" \| "meilisearch"` | Yes | Search engine backend |
+| `engine`    | `"elasticsearch" \| "opensearch" \| "meilisearch" \| "typesense"` | Yes | Search engine backend |
 | `host`      | `string`             | Yes      | Search engine host URL                   |
 | `apiKey`    | `string?`            | No       | API key (ES apiKey auth, or Meilisearch API key) |
 | `username`  | `string?`            | No       | Basic auth username (ES, OpenSearch)     |
 | `password`  | `string?`            | No       | Basic auth password (ES, OpenSearch)     |
-| `indexName` | `string \| string[]` | Yes      | Index name(s). Multi-index arrays are supported by ES/OpenSearch; Meilisearch uses only the first entry. |
+| `indexName` | `string \| string[]` | Yes      | Index name(s). Multi-index arrays are supported by ES/OpenSearch; Meilisearch and Typesense use only the first entry. |
+| `dateFields`| `string[]?`          | No       | Field names containing dates stored as Unix timestamps. Used by Typesense to convert int64 values back to ISO 8601 strings in responses. |
 
 ### Engine-specific notes
 
@@ -86,6 +87,13 @@ indexes:
     - Filters use Meilisearch string syntax (translated automatically)
     - Histograms, geo grid, and phrase suggestions are **not supported** and return empty/default values
     - Boosts and `searchableFields` are managed at the Meilisearch index level, not at query time
+    - Multi-index arrays are not supported — only the first entry is used
+  </TabItem>
+  <TabItem label="Typesense" icon="seti:json">
+    - Uses `apiKey` for auth (set via `X-TYPESENSE-API-KEY` header)
+    - Dates are stored as int64 (Unix timestamps) for sorting/filtering — use `dateFields` to convert back to ISO strings in responses
+    - Supports boosts via `query_by_weights` and `searchableFields` via `query_by`
+    - Histograms, geo grid, and phrase suggestions are **not supported** and return empty/default values
     - Multi-index arrays are not supported — only the first entry is used
   </TabItem>
 </Tabs>
@@ -210,6 +218,18 @@ indexes:
     host: ${MEILI_HOST}
     apiKey: ${MEILI_API_KEY}
     indexName: products
+    defaults:
+      perPage: 20
+      facets:
+        - category
+
+  blog:
+    engine: typesense
+    host: ${TYPESENSE_HOST}
+    apiKey: ${TYPESENSE_API_KEY}
+    indexName: blog_posts
+    dateFields:
+      - postDate
     defaults:
       perPage: 20
       facets:

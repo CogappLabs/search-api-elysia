@@ -23,6 +23,7 @@ const IndexConfigSchema = t.Object({
     t.Literal("elasticsearch"),
     t.Literal("opensearch"),
     t.Literal("meilisearch"),
+    t.Literal("typesense"),
   ]),
   host: t.String(),
   apiKey: t.Optional(t.String()),
@@ -31,6 +32,7 @@ const IndexConfigSchema = t.Object({
   indexName: t.Union([t.String(), t.Array(t.String())]),
   defaults: t.Optional(IndexDefaultsSchema),
   fields: t.Optional(t.Record(t.String(), FieldConfigSchema)),
+  dateFields: t.Optional(t.Array(t.String())),
 });
 
 const AppConfigSchema = t.Object({

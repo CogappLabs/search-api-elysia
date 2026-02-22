@@ -85,6 +85,7 @@ export interface IndexConfig {
     indexName: string | string[];
     defaults?: IndexDefaults;
     fields?: Record<string, FieldConfig>;
+    dateFields?: string[];
 }
 export interface AppConfig {
     port: number;

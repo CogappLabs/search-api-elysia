@@ -85,3 +85,17 @@ indexes:
   #     perPage: 20
   #     facets:
   #       - category
+
+  # Typesense example: auto-detects schema from collection fields.
+  # Date fields stored as int64 (Unix timestamps) need dateFields for ISO string conversion.
+  # typesense_index:
+  #   engine: typesense
+  #   host: http://localhost:8108
+  #   apiKey: ${TYPESENSE_API_KEY}
+  #   indexName: my_typesense_collection
+  #   dateFields:
+  #     - postDate
+  #   defaults:
+  #     perPage: 20
+  #     facets:
+  #       - category

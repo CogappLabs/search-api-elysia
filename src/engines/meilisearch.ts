@@ -59,6 +59,8 @@ export class MeilisearchEngine implements SearchEngine {
         : ["*"];
     }
 
+    // TODO: pass options.boosts/options.searchableFields via attributesToSearchOn
+    // to support per-query searchable field scoping (Meilisearch v1.3+)
     const response = await this.index.search(query || "", {
       page,
       hitsPerPage: perPage,
