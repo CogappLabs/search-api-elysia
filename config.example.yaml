@@ -10,7 +10,8 @@ port: 3000
 # apiKey: ${API_KEY}
 
 # Optional CORS allowed origins (omit to disable CORS).
-# corsOrigins:
+# corsOrigins: "*"            # Allow all origins
+# corsOrigins:                # Or allow specific origins
 #   - https://example.com
 #   - https://app.example.com
 

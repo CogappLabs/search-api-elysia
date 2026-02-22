@@ -102,6 +102,6 @@ export interface IndexConfig {
 export interface AppConfig {
   port: number;
   apiKey?: string;
-  corsOrigins?: string[];
+  corsOrigins?: string | string[];
   indexes: Record<string, IndexConfig>;
 }

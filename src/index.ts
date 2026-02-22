@@ -82,7 +82,11 @@ const app = new Elysia()
       },
     }),
   )
-  .use(cors({ origin: config.corsOrigins ?? false }))
+  .use(
+    cors({
+      origin: config.corsOrigins === "*" ? true : (config.corsOrigins ?? false),
+    }),
+  )
   .onBeforeHandle(({ headers, path }) => {
     if (path === "/health" || path === "/openapi" || path === "/openapi/json")
       return;

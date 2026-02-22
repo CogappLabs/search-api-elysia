@@ -32,7 +32,7 @@ const IndexConfigSchema = t.Object({
 const AppConfigSchema = t.Object({
   port: t.Number({ default: 3000, minimum: 1 }),
   apiKey: t.Optional(t.String()),
-  corsOrigins: t.Optional(t.Array(t.String())),
+  corsOrigins: t.Optional(t.Union([t.String(), t.Array(t.String())])),
   indexes: t.Record(t.String(), IndexConfigSchema),
 });
 

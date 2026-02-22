@@ -37,8 +37,11 @@ bun run docs:build                          # build docs for production
 CORS is disabled by default. Add `corsOrigins` to your `config.yaml` to allow cross-origin requests:
 
 ```yaml
+# Allow all origins
+corsOrigins: "*"
+
+# Or allow specific origins
 corsOrigins:
   - http://localhost:4321
+  - https://example.com
 ```
-
-This is needed for the interactive demos in the docs site to reach your local API.

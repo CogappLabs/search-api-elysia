@@ -15,11 +15,11 @@
       "description": "Optional bearer token for API authentication. Clients must send this as a Bearer token in the Authorization header."
     },
     "corsOrigins": {
-      "type": "array",
-      "description": "Allowed CORS origins. Omit to disable CORS entirely.",
-      "items": {
-        "type": "string"
-      }
+      "description": "Allowed CORS origins. Use \"*\" to allow all origins, an array for specific origins, or omit to disable CORS.",
+      "oneOf": [
+        { "type": "string", "enum": ["*"] },
+        { "type": "array", "items": { "type": "string" } }
+      ]
     },
     "indexes": {
       "type": "object",

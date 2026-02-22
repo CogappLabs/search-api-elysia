@@ -25,7 +25,7 @@ The server will exit with an error if a referenced variable is not set.
 | ------------- | ---------- | ------- | ---------------------------------------------- |
 | `port`        | `number`   | `3000`  | Server listen port                             |
 | `apiKey`      | `string?`  | —       | Bearer token for API authentication            |
-| `corsOrigins` | `string[]?`| —       | Allowed CORS origins (omit to disable CORS)    |
+| `corsOrigins` | `"*" \| string[]` | —       | Allowed CORS origins. `"*"` for all, array for specific, omit to disable. |
 
 When `apiKey` is set (or the `API_KEY` env var exists), all requests except `/health` and `/openapi*` require a `Authorization: Bearer <token>` header.
 
@@ -134,9 +134,7 @@ See [Field Aliases](/features/field-aliases/) for details on which parameters su
 ```yaml
 port: 3000
 apiKey: ${API_KEY}
-corsOrigins:
-  - https://example.com
-  - https://app.example.com
+corsOrigins: "*"  # or an array: ["https://example.com"]
 
 indexes:
   collections:

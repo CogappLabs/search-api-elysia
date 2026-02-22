@@ -46,7 +46,7 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 
 **Request flow**: `src/index.ts` loads config → calls `deriveFromFields()` per index → creates engine instances, `FieldAliasMap` instances, and derived boost/searchable maps → mounts routes → applies bearer token auth (optional), CORS, and error handling as Elysia middleware.
 
-**CORS**: Controlled via `corsOrigins` in config. When omitted, CORS is disabled (`false`). Set explicit origins for cross-origin access (e.g. docs demos need `http://localhost:4321`).
+**CORS**: Controlled via `corsOrigins` in config. When omitted, CORS is disabled (`false`). Set `"*"` to allow all origins, or an array for specific origins. Docs demos need CORS enabled for the docs dev server origin.
 
 ## Conventions
 
