@@ -21,6 +21,16 @@ export function ApiConfig({
 
   return (
     <div className="not-content mb-4 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+      <p className="px-4 pt-3 text-xs text-gray-500 dark:text-gray-400">
+        Requires a running Search API instance. See the{" "}
+        <a
+          href="/search-api-elysia/guides/getting-started/"
+          className="underline hover:text-gray-700 dark:hover:text-gray-200"
+        >
+          Getting Started
+        </a>{" "}
+        guide to set one up locally.
+      </p>
       <button
         type="button"
         onClick={() => setOpen(!open)}
