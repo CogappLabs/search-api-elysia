@@ -2,8 +2,9 @@
 # Search API Configuration
 # Copy to config.yaml and fill in your values.
 # Environment variables can be referenced with ${VAR_NAME} syntax.
+# Use ${VAR_NAME:-default} to provide a fallback when the variable is not set.
 
-port: 3000
+port: ${PORT:-3000}
 
 # Optional bearer token for API authentication.
 # Can also be set via API_KEY env var.

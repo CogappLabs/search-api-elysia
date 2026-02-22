@@ -140,6 +140,35 @@ indexes:
     expect(() => loadConfig(path)).toThrow("MISSING_VAR_FOR_TEST");
   });
 
+  it("uses default value when env var is not set", () => {
+    delete process.env.UNSET_PORT_VAR;
+    const path = writeTempConfig(`
+port: \${UNSET_PORT_VAR:-4000}
+indexes:
+  test:
+    engine: elasticsearch
+    host: https://example.com
+    indexName: my_index
+`);
+    const config = loadConfig(path);
+    expect(config.port).toBe(4000);
+  });
+
+  it("uses env var value over default when set", () => {
+    process.env.SET_PORT_VAR = "5000";
+    const path = writeTempConfig(`
+port: \${SET_PORT_VAR:-4000}
+indexes:
+  test:
+    engine: elasticsearch
+    host: https://example.com
+    indexName: my_index
+`);
+    const config = loadConfig(path);
+    expect(config.port).toBe(5000);
+    delete process.env.SET_PORT_VAR;
+  });
+
   it("parses optional defaults", () => {
     const path = writeTempConfig(`
 indexes:

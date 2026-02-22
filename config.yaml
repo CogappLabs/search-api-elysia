@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=./schemas/config.schema.json
-port: 3000
+port: ${PORT:-3000}
 corsOrigins: "*"
 
 indexes:

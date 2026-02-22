@@ -40,16 +40,18 @@ const AppConfigSchema = t.Object({
   indexes: t.Record(t.String(), IndexConfigSchema),
 });
 
-/** Replace ${VAR_NAME} with process.env.VAR_NAME */
+/** Replace ${VAR_NAME} or ${VAR_NAME:-default} with process.env.VAR_NAME */
 function interpolateEnvVars(text: string): string {
-  return text.replace(/\$\{([^}]+)}/g, (_, varName: string) => {
+  return text.replace(/\$\{([^}]+)}/g, (_, expr: string) => {
+    const match = expr.match(/^([^:]+):-(.*)$/);
+    const varName = (match ? match[1] : expr) as string;
+    const defaultValue = match ? (match[2] as string) : undefined;
     const value = process.env[varName];
-    if (value === undefined) {
-      throw new Error(
-        `Environment variable "${varName}" is not set (referenced in config)`,
-      );
-    }
-    return value;
+    if (value !== undefined) return value;
+    if (defaultValue !== undefined) return defaultValue;
+    throw new Error(
+      `Environment variable "${varName}" is not set (referenced in config)`,
+    );
   });
 }
 
