@@ -24,17 +24,17 @@ Full-text search with pagination, facets, filters, sorting, highlighting, histog
 | `perPage`   | `number` | `20` / config    | Results per page (1–100).                                      |
 | `sort`      | `json`   | —                | Sort order. JSON object mapping field names to `"asc"` or `"desc"`. |
 | `facets`    | `string` | config default   | Comma-separated list of fields to aggregate as facets.         |
-| `filters`   | `json`   | —                | Field filters. See [Filters](../features/filters/).              |
+| `filters`   | `json`   | —                | Field filters. See [Filters](../../features/filters/).              |
 | `highlight` | `string` | config default   | `"true"` to return highlighted fragments with `<mark>` tags.  |
 | `fields`    | `string` | all fields       | Comma-separated list of fields to return.                      |
 | `suggest`   | `string` | —                | `"true"` to enable phrase suggestions (requires `suggestField` in config). |
 | `boosts`    | `json`   | config default   | Field boost weights. JSON object mapping field names to numbers. |
-| `histogram` | `json`   | —                | Histogram intervals. See [Histograms](../features/histograms/). |
-| `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](../features/geo-map/). |
+| `histogram` | `json`   | —                | Histogram intervals. See [Histograms](../../features/histograms/). |
+| `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](../../features/geo-map/). |
 
-When no `boosts` are provided (via query param or config), the search uses all fields by default. Use `fields` in the index config with `weight` or `searchable: true` to control which fields are searched. See [Configuration](../guides/configuration/#fields).
+When no `boosts` are provided (via query param or config), the search uses all fields by default. Use `fields` in the index config with `weight` or `searchable: true` to control which fields are searched. See [Configuration](../../guides/configuration/#fields).
 
-All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `histogram`, `geoGrid.field`) support [field aliases](../features/field-aliases/) when configured.
+All field-name parameters (`sort`, `facets`, `filters`, `boosts`, `fields`, `histogram`, `geoGrid.field`) support [field aliases](../../features/field-aliases/) when configured.
 
 ## Response
 

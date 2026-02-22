@@ -13,7 +13,7 @@ The geo map feature groups documents by geographic location using Elasticsearch'
 
 ## Usage
 
-Pass a `geoGrid` JSON parameter to the [search endpoint](../reference/search/):
+Pass a `geoGrid` JSON parameter to the [search endpoint](../../reference/search/):
 
 ```bash
 curl "https://search-api-elysia-production.up.railway.app/collections/search?q=&geoGrid=%7B%22field%22%3A%22coordinates%22%2C%22precision%22%3A6%2C%22bounds%22%3A%7B%22top_left%22%3A%7B%22lat%22%3A60%2C%22lon%22%3A-5%7D%2C%22bottom_right%22%3A%7B%22lat%22%3A48%2C%22lon%22%3A3%7D%7D%7D"
