@@ -5,11 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-bun test                          # run all tests
+bun test                          # run all tests (scoped to test/ via bunfig.toml)
 bun test test/config.test.ts      # run a single test file
 bun test --watch                  # run tests in watch mode
+bunx playwright test              # run Playwright e2e tests (in e2e/)
 bunx @biomejs/biome check src/ test/   # lint (biome)
 bunx tsc --noEmit                 # type check
+bun run build:types               # generate .d.ts declarations to dist/
 ```
 
 After significant changes, run both: `bunx @biomejs/biome check src/ test/ && bunx tsc --noEmit`
@@ -17,6 +19,12 @@ After significant changes, run both: `bunx @biomejs/biome check src/ test/ && bu
 ```bash
 bun run docs:dev                  # run docs site locally (Astro)
 bun run docs:build                # build docs for production
+```
+
+```bash
+railway service search-api-elysia # link Railway CLI to the service
+railway logs                      # view deployment logs
+railway status                    # check project/environment/service
 ```
 
 ## Overview
@@ -52,6 +60,10 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 **Request flow**: `src/index.ts` loads config → calls `deriveFromFields()` per index → creates engine instances, `FieldAliasMap` instances, and derived boost/searchable maps → mounts routes → applies bearer token auth (optional), CORS, and error handling as Elysia middleware.
 
 **CORS**: Controlled via `corsOrigins` in config. When omitted, CORS is disabled (`false`). Set `"*"` to allow all origins, or an array for specific origins. Docs demos need CORS enabled for the docs dev server origin.
+
+**Eden Treaty client** (`src/index.ts`): Exports `type App = typeof app` so external TypeScript projects can get a fully typed client via `@elysiajs/eden`. Declarations are generated to `dist/` by `bun run build:types` (runs `tsc -p tsconfig.build.json`). The lefthook pre-commit hook regenerates and stages `dist/` automatically. Consumers install via `bun add github:CogappLabs/search-api-elysia @elysiajs/eden` and import as `search-api-bun`. Requires `moduleResolution: "bundler"` (not `nodenext` — the `.d.ts` files contain `.ts` extension imports).
+
+**Deployment**: Railway deploys from `main` automatically. Uses `bun install --frozen-lockfile` so `bun.lock` must be committed and in sync with `package.json`. After changing dependencies, always run `bun install` and commit the updated lockfile.
 
 ## Conventions
 
