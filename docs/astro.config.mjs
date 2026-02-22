@@ -9,6 +9,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: "Search API",
+			favicon: "/favicon.svg",
 			customCss: ["./src/styles/tailwind.css"],
 			social: [
 				{
