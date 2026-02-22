@@ -29,6 +29,7 @@ export default defineConfig({
 					items: [
 						{ label: "Getting Started", slug: "guides/getting-started" },
 						{ label: "Configuration", slug: "guides/configuration" },
+						{ label: "Authentication", slug: "guides/authentication" },
 						{ label: "Adding a Search Engine", slug: "guides/adding-an-engine" },
 					],
 				},
@@ -43,6 +44,8 @@ export default defineConfig({
 						{ label: "Histograms", slug: "features/histograms" },
 						{ label: "Geo Map", slug: "features/geo-map" },
 						{ label: "Field Aliases", slug: "features/field-aliases" },
+						{ label: "Indexes", slug: "reference/indexes" },
+						{ label: "Health", slug: "reference/health" },
 						{ label: "Mapping", slug: "reference/mapping" },
 						{ label: "Raw Query", slug: "reference/raw-query" },
 						{ label: "InstantSearch", slug: "features/instantsearch" },

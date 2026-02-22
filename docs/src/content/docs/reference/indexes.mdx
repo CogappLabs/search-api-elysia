@@ -1,0 +1,34 @@
+---
+title: Indexes
+description: List all configured search indexes and their engine types.
+---
+
+```
+GET /indexes
+```
+
+Returns all configured index handles and their engine types. Use the `handle` value in other API paths (e.g. `/:handle/search`).
+
+## Response
+
+```json
+{
+  "indexes": [
+    { "handle": "collections", "engine": "elasticsearch" },
+    { "handle": "catalogue", "engine": "opensearch" },
+    { "handle": "products", "engine": "meilisearch" }
+  ]
+}
+```
+
+| Field              | Type     | Description                              |
+| ------------------ | -------- | ---------------------------------------- |
+| `indexes`          | `array`  | Array of configured indexes.             |
+| `indexes[].handle` | `string` | URL-safe handle used in API paths.       |
+| `indexes[].engine` | `string` | Search engine type (`elasticsearch`, `opensearch`, or `meilisearch`). |
+
+## Example
+
+```bash
+curl http://localhost:3000/indexes
+```
