@@ -66,4 +66,6 @@ Returns `{"cleared":true}`. This endpoint is protected by the same bearer token 
 
 ## Response compression
 
-All JSON responses are gzip-compressed when the client sends an `Accept-Encoding: gzip` header (which browsers and most HTTP clients do by default). This typically reduces response sizes by 70-80%.
+:::tip
+All JSON responses are gzip-compressed when the client sends an `Accept-Encoding: gzip` header (which browsers and most HTTP clients do by default). This typically reduces response sizes by 70–80%. No configuration is required — compression is always active.
+:::

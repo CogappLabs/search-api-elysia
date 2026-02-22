@@ -75,10 +75,14 @@ Multiple filters can be combined in a single object. All filters are applied wit
 
 ## Filters and facets
 
+:::note[How post_filter works]
 When both `filters` and `facets` are used in the same search request, filters on fields that are also requested as facets are applied as a `post_filter` in Elasticsearch. This means facet counts for those fields reflect the **unfiltered** result set, which is typically what you want for a faceted search UI — users can see how many results exist for other filter values.
 
 Filters on fields that are **not** in the facets list are applied as regular query filters and will affect both the results and all facet counts.
+:::
 
 ## Facet endpoint limitations
 
+:::caution
 The [facets endpoint](../../reference/facets/) only supports string and string array filters. Boolean and range filters are only available on the [search endpoint](../../reference/search/).
+:::

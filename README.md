@@ -1,5 +1,7 @@
 # Search API
 
+[![Deploy docs to GitHub Pages](https://github.com/CogappLabs/search-api-elysia/actions/workflows/docs.yml/badge.svg)](https://github.com/CogappLabs/search-api-elysia/actions/workflows/docs.yml)
+
 A unified REST search interface over Elasticsearch, OpenSearch, and Meilisearch indexes, built with [Bun](https://bun.sh) and [Elysia](https://elysiajs.com).
 
 **[Documentation](https://cogapplabs.github.io/search-api-elysia/)**

@@ -3,6 +3,7 @@ title: Search
 description: Full-text search endpoint with pagination, facets, filters, sorting, and more.
 ---
 
+import { Badge } from "@astrojs/starlight/components";
 import SearchDemo from "@/components/SearchDemo.tsx";
 
 ## Try it
@@ -27,10 +28,10 @@ Full-text search with pagination, facets, filters, sorting, highlighting, histog
 | `filters`   | `json`   | —                | Field filters. See [Filters](../../features/filters/).              |
 | `highlight` | `string` | config default   | `"true"` to return highlighted fragments with `<mark>` tags.  |
 | `fields`    | `string` | all fields       | Comma-separated list of fields to return.                      |
-| `suggest`   | `string` | —                | `"true"` to enable phrase suggestions (requires `suggestField` in config). |
-| `boosts`    | `json`   | config default   | Field boost weights. JSON object mapping field names to numbers. |
-| `histogram` | `json`   | —                | Histogram intervals. See [Histograms](../../features/histograms/). |
-| `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](../../features/geo-map/). |
+| `suggest`   | `string` | —                | `"true"` to enable phrase suggestions (requires `suggestField` in config). <Badge text="ES/OS only" variant="note" /> |
+| `boosts`    | `json`   | config default   | Field boost weights. JSON object mapping field names to numbers. <Badge text="ES/OS only" variant="note" /> |
+| `histogram` | `json`   | —                | Histogram intervals. See [Histograms](../../features/histograms/). <Badge text="ES/OS only" variant="note" /> |
+| `geoGrid`   | `json`   | —                | Geo tile grid. See [Geo Map](../../features/geo-map/). <Badge text="ES/OS only" variant="note" /> |
 
 When no `boosts` are provided (via query param or config), the search uses all fields by default. Use `fields` in the index config with `weight` or `searchable: true` to control which fields are searched. See [Configuration](../../guides/configuration/#fields).
 

@@ -3,6 +3,8 @@ title: Configuration
 description: Config file format, environment variables, index settings, and field configuration.
 ---
 
+import { Tabs, TabItem, Badge } from "@astrojs/starlight/components";
+
 The API is configured through a `config.yaml` file in the project root. A JSON Schema is available at `schemas/config.schema.json` for editor autocompletion.
 
 ## Environment variable interpolation
@@ -62,9 +64,25 @@ indexes:
 
 ### Engine-specific notes
 
-- **Elasticsearch**: Supports `apiKey` or `username`/`password` auth. Full feature support including histograms, geo grid, and phrase suggestions.
-- **OpenSearch**: Uses the same query DSL as Elasticsearch. Supports `username`/`password` auth only (the OpenSearch JS client does not support `apiKey` auth). Full feature support.
-- **Meilisearch**: Uses `apiKey` for auth. Filters use Meilisearch string syntax (translated automatically). Histograms, geo grid, and phrase suggestions are not supported and return empty/default values. Boosts and `searchableFields` are managed at the Meilisearch index level, not at query time.
+<Tabs>
+  <TabItem label="Elasticsearch" icon="seti:json">
+    - Supports `apiKey` or `username`/`password` auth
+    - Full feature support including histograms, geo grid, and phrase suggestions
+    - Multi-index search via array `indexName`
+  </TabItem>
+  <TabItem label="OpenSearch" icon="seti:json">
+    - Supports `username`/`password` auth only (the OpenSearch JS client does not support `apiKey` auth)
+    - Uses the same query DSL as Elasticsearch — full feature support
+    - Multi-index search via array `indexName`
+  </TabItem>
+  <TabItem label="Meilisearch" icon="seti:json">
+    - Uses `apiKey` for auth
+    - Filters use Meilisearch string syntax (translated automatically)
+    - Histograms, geo grid, and phrase suggestions are **not supported** and return empty/default values
+    - Boosts and `searchableFields` are managed at the Meilisearch index level, not at query time
+    - Multi-index arrays are not supported — only the first entry is used
+  </TabItem>
+</Tabs>
 
 ### Multi-index search
 

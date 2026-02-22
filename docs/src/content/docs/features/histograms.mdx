@@ -58,9 +58,11 @@ Each field gets its own array of buckets in the response.
 
 ## Validation
 
+:::note
 - Interval values must be at least `1`
 - Fields should be numeric types in the Elasticsearch mapping (use the [mapping endpoint](../../reference/mapping/) to check)
 - Invalid JSON returns a `400` error
+:::
 
 ## Example with filters
 

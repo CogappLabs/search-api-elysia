@@ -1,4 +1,5 @@
 import starlight from "@astrojs/starlight";
+import starlightLlmsTxt from "starlight-llms-txt";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
@@ -11,6 +12,10 @@ export default defineConfig({
 			title: "Search API",
 			favicon: "/favicon.svg",
 			customCss: ["./src/styles/tailwind.css"],
+			plugins: [starlightLlmsTxt({ rawContent: true })],
+			components: {
+				SocialIcons: "./src/components/overrides/SocialIcons.astro",
+			},
 			social: [
 				{
 					icon: "github",

@@ -3,83 +3,89 @@ title: Getting Started
 description: Install, configure, and run the Search API.
 ---
 
-## Prerequisites
+import { Steps, LinkCard, CardGrid } from "@astrojs/starlight/components";
 
-- [Bun](https://bun.sh) v1.0 or later
-- An Elasticsearch instance (v7 or v8) with at least one index
+<Steps>
 
-## Installation
+1. **Check prerequisites**
 
-Clone the repository and install dependencies:
+   - [Bun](https://bun.sh) v1.0 or later
+   - An Elasticsearch instance (v7 or v8) with at least one index
 
-```bash
-bun install
-```
+2. **Install dependencies**
 
-## Configuration
+   Clone the repository and install dependencies:
 
-Copy the example config and edit it with your Elasticsearch details:
+   ```bash
+   bun install
+   ```
 
-```bash
-cp config.example.yaml config.yaml
-```
+3. **Configure your indexes**
 
-A minimal config looks like this:
+   Copy the example config and edit it with your Elasticsearch details:
 
-```yaml
-port: 3000
+   ```bash
+   cp config.example.yaml config.yaml
+   ```
 
-indexes:
-  my_index:
-    engine: elasticsearch
-    host: https://localhost:9200
-    apiKey: ${ES_API_KEY}
-    indexName: my_es_index
-```
+   A minimal config looks like this:
 
-Each key under `indexes` becomes a URL handle — the config above creates endpoints at `/my_index/search`, `/my_index/autocomplete`, etc.
+   ```yaml
+   port: 3000
 
-See the [Configuration guide](../configuration/) for the full reference.
+   indexes:
+     my_index:
+       engine: elasticsearch
+       host: https://localhost:9200
+       apiKey: ${ES_API_KEY}
+       indexName: my_es_index
+   ```
 
-## Running
+   Each key under `indexes` becomes a URL handle — the config above creates endpoints at `/my_index/search`, `/my_index/autocomplete`, etc.
 
-Start the server:
+   See the [Configuration guide](../configuration/) for the full reference.
 
-```bash
-# Production
-bun run start
+4. **Start the server**
 
-# Development (auto-reload on changes)
-bun run dev
-```
+   ```bash
+   # Production
+   bun run start
 
-## Verify
+   # Development (auto-reload on changes)
+   bun run dev
+   ```
 
-Check the health endpoint:
+5. **Verify it's working**
 
-```bash
-curl http://localhost:3000/health
-# {"status":"ok","cache":"disabled"}
-```
+   Check the health endpoint:
 
-List configured indexes:
+   ```bash
+   curl http://localhost:3000/health
+   # {"status":"ok","cache":"disabled"}
+   ```
 
-```bash
-curl http://localhost:3000/indexes
-# {"indexes":[{"handle":"my_index","engine":"elasticsearch"}]}
-```
+   List configured indexes:
 
-Run a search:
+   ```bash
+   curl http://localhost:3000/indexes
+   # {"indexes":[{"handle":"my_index","engine":"elasticsearch"}]}
+   ```
 
-```bash
-curl "http://localhost:3000/my_index/search?q=hello"
-```
+   Run a search:
+
+   ```bash
+   curl "http://localhost:3000/my_index/search?q=hello"
+   ```
+
+</Steps>
 
 ## Next steps
 
-- [Configuration](../configuration/) — full config file reference
-- [Search endpoint](../../reference/search/) — all query parameters
-- [Filters](../../features/filters/) — filter types and usage
-- [Field aliases](../../features/field-aliases/) — rename fields for consumers
-- [Caching](../../features/caching/) — Redis caching and compression
-- [Eden Treaty Client](../../features/eden-client/) — type-safe API client for TypeScript projects
+<CardGrid>
+  <LinkCard title="Configuration" href="../configuration/" description="Full config file reference with all index settings." />
+  <LinkCard title="Search endpoint" href="../../reference/search/" description="All query parameters, response format, and examples." />
+  <LinkCard title="Filters" href="../../features/filters/" description="String, array, boolean, and range filter types." />
+  <LinkCard title="Field aliases" href="../../features/field-aliases/" description="Rename fields for API consumers." />
+  <LinkCard title="Caching" href="../../features/caching/" description="Redis caching and gzip compression." />
+  <LinkCard title="Eden Treaty Client" href="../../features/eden-client/" description="Type-safe API client for TypeScript projects." />
+</CardGrid>

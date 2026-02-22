@@ -3,56 +3,66 @@ title: Eden Treaty Client
 description: Type-safe API client for TypeScript projects using Eden Treaty.
 ---
 
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
 [Eden Treaty](https://elysiajs.com/eden/treaty/overview) provides a fully type-safe client inferred from the API's Elysia type signature. You get autocomplete on routes, typed request parameters, and typed responses — no code generation or manual type definitions needed.
 
-## Installation
+## Setup
 
-Install the Search API package and Eden Treaty in your TypeScript project:
+<Steps>
 
-```bash
-bun add github:CogappLabs/search-api-elysia @elysiajs/eden
-```
+1. **Install the packages**
 
-The package is installed as `search-api-bun` (the npm package name), so imports use that name.
+   ```bash
+   bun add github:CogappLabs/search-api-elysia @elysiajs/eden
+   ```
 
-## Creating a client
+   The package is installed as `search-api-bun` (the npm package name), so imports use that name.
 
-Import the `App` type and create a typed client pointing at your API:
+2. **Create a client**
 
-```typescript
-import { treaty } from "@elysiajs/eden";
-import type { App } from "search-api-bun";
+   <Tabs>
+     <TabItem label="Basic">
+       ```typescript
+       import { treaty } from "@elysiajs/eden";
+       import type { App } from "search-api-bun";
 
-const api = treaty<App>("https://your-search-api.example.com");
-```
+       const api = treaty<App>("https://your-search-api.example.com");
+       ```
+     </TabItem>
+     <TabItem label="With auth">
+       ```typescript
+       import { treaty } from "@elysiajs/eden";
+       import type { App } from "search-api-bun";
 
-If your API requires a bearer token, pass it when creating the client:
+       const api = treaty<App>("https://your-search-api.example.com", {
+         headers: {
+           authorization: "Bearer your-api-key",
+         },
+       });
+       ```
+     </TabItem>
+   </Tabs>
 
-```typescript
-const api = treaty<App>("https://your-search-api.example.com", {
-  headers: {
-    authorization: "Bearer your-api-key",
-  },
-});
-```
+3. **Make typed requests**
 
-## Route parameters
+   Eden Treaty maps URL paths to a tree-like object syntax, using `.` instead of `/`. Dynamic path parameters like `:handle` are passed using function call syntax:
 
-Eden Treaty maps URL paths to a tree-like object syntax, using `.` instead of `/`. Dynamic path parameters like `:handle` are passed using function call syntax:
+   ```typescript
+   // /:handle/search
+   api({ handle: "my-index" }).search.get(/* ... */);
 
-```typescript
-// /:handle/search
-api({ handle: "my-index" }).search.get(/* ... */);
+   // /:handle/documents/:id
+   api({ handle: "my-index" }).documents({ id: "498" }).get();
 
-// /:handle/documents/:id
-api({ handle: "my-index" }).documents({ id: "498" }).get();
+   // /:handle/facets/:field
+   api({ handle: "my-index" }).facets({ field: "placeCountry" }).get();
 
-// /:handle/facets/:field
-api({ handle: "my-index" }).facets({ field: "placeCountry" }).get();
+   // /health (no dynamic params)
+   api.health.get();
+   ```
 
-// /health (no dynamic params)
-api.health.get();
-```
+</Steps>
 
 ## Error handling
 

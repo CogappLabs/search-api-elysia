@@ -36,6 +36,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-instantsearch": "^7.24.0",
+    "starlight-llms-txt": "^0.7.0",
     "tailwindcss": "^4.2.0"
   },
   "peerDependencies": {
@@ -43,7 +44,9 @@
     "@elysiajs/eden": "^1.4.8"
   },
   "peerDependenciesMeta": {
-    "@elysiajs/eden": { "optional": true }
+    "@elysiajs/eden": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@elastic/elasticsearch": "8",

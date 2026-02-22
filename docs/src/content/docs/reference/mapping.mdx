@@ -3,6 +3,7 @@ title: Mapping
 description: Retrieve the Elasticsearch index mapping.
 ---
 
+import { Card, CardGrid } from "@astrojs/starlight/components";
 import MappingDemo from "@/components/MappingDemo.tsx";
 
 ## Try it
@@ -45,10 +46,20 @@ Returns the raw Elasticsearch mapping as a JSON object. The structure depends on
 
 ## Use cases
 
-- Discover which fields are available for searching, filtering, and faceting
-- Check field types to determine which filter formats to use (e.g. `keyword` fields for string filters, numeric fields for range filters)
-- Identify `geo_point` fields for the [geo map](../../features/geo-map/)
-- Find numeric fields suitable for [histograms](../../features/histograms/)
+<CardGrid>
+  <Card title="Discover fields" icon="magnifier">
+    Find which fields are available for searching, filtering, and faceting.
+  </Card>
+  <Card title="Check field types" icon="information">
+    Determine which filter formats to use — `keyword` for string filters, numeric fields for range filters.
+  </Card>
+  <Card title="Geo fields" icon="globe">
+    Identify `geo_point` fields for the [geo map](../../features/geo-map/).
+  </Card>
+  <Card title="Histogram fields" icon="bars">
+    Find numeric fields suitable for [histograms](../../features/histograms/).
+  </Card>
+</CardGrid>
 
 ## Examples
 
