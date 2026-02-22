@@ -7,6 +7,7 @@ import type { SearchEngine } from "./engines/engine.ts";
 import { createEngine } from "./engines/index.ts";
 import { FieldAliasMap } from "./field-aliases.ts";
 import { indexesRoute } from "./routes/indexes.ts";
+import { instantSearchRoutes } from "./routes/instantsearch.ts";
 import { searchApiRoutes } from "./routes/search-api.ts";
 import type { AppConfig, FieldConfig, IndexConfig } from "./types.ts";
 
@@ -178,6 +179,17 @@ const app = new Elysia()
       cache,
     ),
   )
+  .use(
+    instantSearchRoutes(
+      engines,
+      configs,
+      aliasMaps,
+      boostsMaps,
+      searchableFieldsMaps,
+    ),
+  )
   .listen(config.port);
 
 console.log(`Search API running at http://localhost:${app.server?.port}`);
+
+export type App = typeof app;

@@ -39,6 +39,8 @@ export default defineConfig({
 						{ label: "Field Aliases", slug: "features/field-aliases" },
 						{ label: "Mapping", slug: "reference/mapping" },
 						{ label: "Raw Query", slug: "reference/raw-query" },
+						{ label: "InstantSearch", slug: "features/instantsearch" },
+					{ label: "Eden Treaty Client", slug: "features/eden-client" },
 					],
 				},
 			],

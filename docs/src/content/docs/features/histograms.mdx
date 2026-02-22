@@ -9,7 +9,7 @@ import HistogramDemo from "@/components/HistogramDemo.tsx";
 
 <HistogramDemo client:only="react" />
 
-Histograms aggregate a numeric field into fixed-interval buckets. Pass a `histogram` JSON parameter to the [search endpoint](/reference/search/).
+Histograms aggregate a numeric field into fixed-interval buckets. Pass a `histogram` JSON parameter to the [search endpoint](../reference/search/).
 
 ## Usage
 
@@ -59,7 +59,7 @@ Each field gets its own array of buckets in the response.
 ## Validation
 
 - Interval values must be at least `1`
-- Fields should be numeric types in the Elasticsearch mapping (use the [mapping endpoint](/reference/mapping/) to check)
+- Fields should be numeric types in the Elasticsearch mapping (use the [mapping endpoint](../reference/mapping/) to check)
 - Invalid JSON returns a `400` error
 
 ## Example with filters

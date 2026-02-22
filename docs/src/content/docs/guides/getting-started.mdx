@@ -39,7 +39,7 @@ indexes:
 
 Each key under `indexes` becomes a URL handle — the config above creates endpoints at `/my_index/search`, `/my_index/autocomplete`, etc.
 
-See the [Configuration guide](/guides/configuration/) for the full reference.
+See the [Configuration guide](../configuration/) for the full reference.
 
 ## Running
 
@@ -58,27 +58,28 @@ bun run dev
 Check the health endpoint:
 
 ```bash
-curl https://search-api-elysia-production.up.railway.app/health
+curl http://localhost:3000/health
 # {"status":"ok","cache":"disabled"}
 ```
 
 List configured indexes:
 
 ```bash
-curl https://search-api-elysia-production.up.railway.app/indexes
+curl http://localhost:3000/indexes
 # {"indexes":[{"handle":"my_index","engine":"elasticsearch"}]}
 ```
 
 Run a search:
 
 ```bash
-curl "https://search-api-elysia-production.up.railway.app/my_index/search?q=hello"
+curl "http://localhost:3000/my_index/search?q=hello"
 ```
 
 ## Next steps
 
-- [Configuration](/guides/configuration/) — full config file reference
-- [Search endpoint](/reference/search/) — all query parameters
-- [Filters](/features/filters/) — filter types and usage
-- [Field aliases](/features/field-aliases/) — rename fields for consumers
-- [Caching](/features/caching/) — Redis caching and compression
+- [Configuration](../configuration/) — full config file reference
+- [Search endpoint](../reference/search/) — all query parameters
+- [Filters](../features/filters/) — filter types and usage
+- [Field aliases](../features/field-aliases/) — rename fields for consumers
+- [Caching](../features/caching/) — Redis caching and compression
+- [Eden Treaty Client](../features/eden-client/) — type-safe API client for TypeScript projects

@@ -20,7 +20,7 @@ Search within a facet field's values. Useful for building typeahead facet filter
 | Parameter | Type     | Description                                      |
 | --------- | -------- | ------------------------------------------------ |
 | `handle`  | `string` | Index handle as configured in config.yaml         |
-| `field`   | `string` | Facet field name to search within (supports [aliases](/features/field-aliases/)) |
+| `field`   | `string` | Facet field name to search within (supports [aliases](../features/field-aliases/)) |
 
 ## Query parameters
 
@@ -30,10 +30,10 @@ Search within a facet field's values. Useful for building typeahead facet filter
 | `maxValues` | `number` | `20`    | Maximum number of facet values to return (1–100).        |
 | `filters`   | `json`   | —       | JSON object to narrow the facet context. Values can be a string or array of strings. |
 
-The `:field` parameter and `filters` keys support [field aliases](/features/field-aliases/) when configured.
+The `:field` parameter and `filters` keys support [field aliases](../features/field-aliases/) when configured.
 
 :::note
-The facets endpoint only supports string and string array filters — not boolean or range filters. For those filter types, use the [search endpoint](/reference/search/).
+The facets endpoint only supports string and string array filters — not boolean or range filters. For those filter types, use the [search endpoint](../search/).
 :::
 
 ## Response

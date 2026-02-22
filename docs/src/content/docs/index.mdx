@@ -6,10 +6,10 @@ hero:
   tagline: A fast, config-driven search API built with Bun and Elysia. Define your indexes in YAML, get a full-featured REST API with facets, filters, histograms, geo map, and field aliases.
   actions:
     - text: Getting Started
-      link: ./guides/getting-started/
+      link: /search-api-elysia/guides/getting-started/
       icon: right-arrow
     - text: Features
-      link: ./reference/search/
+      link: /search-api-elysia/reference/search/
       variant: minimal
 ---
 
@@ -33,6 +33,10 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 	<Card title="Field aliases" icon="pencil">
 		Expose consumer-friendly field names while keeping your Elasticsearch mapping unchanged.
 		Translation is automatic and bidirectional.
+	</Card>
+	<Card title="InstantSearch compatible" icon="magnifier">
+		Drop-in [InstantSearch.js](./features/instantsearch/) support — plug in
+		SearchBox, RefinementList, Hits, Pagination, and more with a small custom search client.
 	</Card>
 	<Card title="Caching & compression" icon="rocket">
 		Optional Redis caching with short TTLs, Cache-Control headers for browser/CDN layering,

@@ -1,0 +1,241 @@
+---
+title: Eden Treaty Client
+description: Type-safe API client for TypeScript projects using Eden Treaty.
+---
+
+[Eden Treaty](https://elysiajs.com/eden/treaty/overview) provides a fully type-safe client inferred from the API's Elysia type signature. You get autocomplete on routes, typed request parameters, and typed responses — no code generation or manual type definitions needed.
+
+## Installation
+
+Install the Search API package and Eden Treaty in your TypeScript project:
+
+```bash
+bun add github:CogappLabs/search-api-elysia @elysiajs/eden
+```
+
+## Creating a client
+
+Import the `App` type and create a typed client pointing at your API:
+
+```typescript
+import { treaty } from "@elysiajs/eden";
+import type { App } from "search-api-bun";
+
+const api = treaty<App>("https://your-search-api.example.com");
+```
+
+If your API requires a bearer token, pass it when creating the client:
+
+```typescript
+const api = treaty<App>("https://your-search-api.example.com", {
+  headers: {
+    authorization: "Bearer your-api-key",
+  },
+});
+```
+
+## Route parameters
+
+Eden Treaty maps URL paths to a tree-like object syntax, using `.` instead of `/`. Dynamic path parameters like `:handle` are passed using function call syntax:
+
+```typescript
+// /:handle/search
+api({ handle: "my-index" }).search.get(/* ... */);
+
+// /:handle/documents/:id
+api({ handle: "my-index" }).documents({ id: "498" }).get();
+
+// /:handle/facets/:field
+api({ handle: "my-index" }).facets({ field: "placeCountry" }).get();
+
+// /health (no dynamic params)
+api.health.get();
+```
+
+## Error handling
+
+Every call returns `{ data, error, status }`. When the request succeeds, `data` is typed and `error` is `null`. When it fails, `data` is `null` and `error` contains the status code and response body:
+
+```typescript
+const { data, error } = await api({ handle: "my-index" }).search.get({
+  query: { q: "castle" },
+});
+
+if (error) {
+  // error.status is 400 | 404
+  // error.value is { error: string }
+  console.error(error.value.error);
+} else {
+  // data is fully typed: hits, totalHits, facets, etc.
+  console.log(`${data.totalHits} results`);
+}
+```
+
+## Search
+
+```typescript
+const { data } = await api({ handle: "my-index" }).search.get({
+  query: {
+    q: "castle",
+    page: 1,
+    perPage: 10,
+    highlight: "true",
+    facets: "placeCountry,placeRegion",
+  },
+});
+
+if (data) {
+  for (const hit of data.hits) {
+    console.log(hit.objectID, hit._score);
+    // hit._highlights is Record<string, string[]>
+  }
+  // Facets
+  for (const [field, values] of Object.entries(data.facets)) {
+    for (const { value, count } of values) {
+      console.log(`${field}: ${value} (${count})`);
+    }
+  }
+}
+```
+
+### With filters and sort
+
+JSON parameters (`filters`, `sort`, `boosts`, `histogram`, `geoGrid`) are passed as JSON strings:
+
+```typescript
+const { data } = await api({ handle: "my-index" }).search.get({
+  query: {
+    q: "",
+    filters: JSON.stringify({ placeCountry: ["Scotland", "Wales"] }),
+    sort: JSON.stringify({ postDate: "desc" }),
+    perPage: 5,
+  },
+});
+```
+
+### With histogram and geo clustering
+
+```typescript
+const { data } = await api({ handle: "my-index" }).search.get({
+  query: {
+    q: "",
+    histogram: JSON.stringify({ population: 1000 }),
+    geoGrid: JSON.stringify({
+      field: "coordinates",
+      precision: 6,
+      bounds: {
+        top_left: { lat: 60, lon: -5 },
+        bottom_right: { lat: 48, lon: 3 },
+      },
+    }),
+  },
+});
+
+if (data) {
+  // Histogram buckets
+  for (const [field, buckets] of Object.entries(data.histograms ?? {})) {
+    for (const { key, count } of buckets) {
+      console.log(`${field} >= ${key}: ${count}`);
+    }
+  }
+  // Geo clusters
+  for (const cluster of data.geoClusters ?? []) {
+    console.log(`${cluster.lat}, ${cluster.lng}: ${cluster.count} docs`);
+  }
+}
+```
+
+## Autocomplete
+
+```typescript
+const { data } = await api({ handle: "my-index" }).autocomplete.get({
+  query: {
+    q: "ston",
+    perPage: 5,
+    facets: "placeCountry",
+    maxFacetsPerField: 4,
+  },
+});
+
+if (data) {
+  console.log(`${data.totalHits} hits`);
+  // Facet value matches (values whose names match the query)
+  if (data.facets) {
+    for (const [field, values] of Object.entries(data.facets)) {
+      console.log(field, values);
+    }
+  }
+}
+```
+
+## Get a document
+
+```typescript
+const { data } = await api({ handle: "my-index" }).documents({ id: "498" }).get();
+
+if (data) {
+  // data is Record<string, unknown> — the full indexed document
+  console.log(data.title, data.uri);
+}
+```
+
+## Facet values
+
+Search within a facet field's values, useful for typeahead facet filters:
+
+```typescript
+const { data } = await api({ handle: "my-index" }).facets({ field: "placeCountry" }).get({
+  query: {
+    q: "sc",
+    maxValues: 10,
+  },
+});
+
+if (data) {
+  for (const { value, count } of data.values) {
+    console.log(`${value} (${count})`);
+  }
+}
+```
+
+With filters to narrow the facet context:
+
+```typescript
+const { data } = await api({ handle: "my-index" }).facets({ field: "placeRegion" }).get({
+  query: {
+    filters: JSON.stringify({ placeCountry: "Scotland" }),
+  },
+});
+```
+
+## Mapping
+
+Retrieve the index mapping to discover available fields:
+
+```typescript
+const { data } = await api({ handle: "my-index" }).mapping.get();
+// data is Record<string, unknown>
+```
+
+## Raw query
+
+Send a raw query DSL body directly to the search engine:
+
+```typescript
+const { data } = await api({ handle: "my-index" }).query.post({
+  query: { match_all: {} },
+  size: 1,
+});
+```
+
+## Health check
+
+```typescript
+const { data } = await api.health.get();
+console.log(data?.status, data?.cache);
+```
+
+## Requirements
+
+- TypeScript project with `moduleResolution` set to `bundler` or `nodenext`
+- Bun or Node.js 18+ runtime

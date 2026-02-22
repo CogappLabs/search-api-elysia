@@ -1,3 +1,7 @@
+export const DEFAULT_ENDPOINT = import.meta.env.DEV
+  ? "http://localhost:3000"
+  : "https://search-api-elysia-production.up.railway.app";
+
 export interface SearchHit {
   objectID: string;
   _index: string;

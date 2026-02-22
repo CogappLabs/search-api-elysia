@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { FacetValue, SearchResult } from "./shared";
-import { hitDisplayText, searchApi, stripHtml } from "./shared";
+import {
+  DEFAULT_ENDPOINT,
+  hitDisplayText,
+  searchApi,
+  stripHtml,
+} from "./shared";
 
 const STORAGE_KEY = "search-api-demo";
 
@@ -19,15 +24,13 @@ function saveConfig(cfg: Record<string, string>) {
 
 export default function FacetSearchDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
   const [token, setToken] = useState(stored.token ?? "");
   const [query, setQuery] = useState("");
-  const [facetField, setFacetField] = useState("placeCountry");
+  const [facetField, setFacetField] = useState("country");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<SearchResult | null>(null);
   const [facetValues, setFacetValues] = useState<FacetValue[]>([]);
@@ -136,7 +139,10 @@ export default function FacetSearchDemo() {
         />
       </div>
       {error && (
-        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}
@@ -144,9 +150,9 @@ export default function FacetSearchDemo() {
         <div className="flex gap-6">
           {facetValues.length > 0 && (
             <div className="w-48 shrink-0">
-              <h4 className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600 dark:text-gray-300">
                 {facetField}
-              </h4>
+              </h3>
               <ul className="space-y-1">
                 {facetValues.map((fv) => (
                   <li key={fv.value}>
@@ -158,7 +164,7 @@ export default function FacetSearchDemo() {
                         className="rounded"
                       />
                       <span className="truncate">{fv.value}</span>
-                      <span className="ml-auto text-xs text-gray-400">
+                      <span className="ml-auto text-xs text-gray-600 dark:text-gray-400">
                         {fv.count}
                       </span>
                     </label>
@@ -168,7 +174,7 @@ export default function FacetSearchDemo() {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="mb-3 text-sm text-gray-500">
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
               {result.totalHits} result{result.totalHits !== 1 ? "s" : ""}
             </p>
             <ul className="space-y-2">
@@ -181,11 +187,13 @@ export default function FacetSearchDemo() {
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       {stripHtml(hitDisplayText(hit))}
                     </span>
-                    <span className="shrink-0 text-xs text-gray-400">
+                    <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
                       {hit._score?.toFixed(1) ?? "—"}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">{hit.objectID}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {hit.objectID}
+                  </p>
                 </li>
               ))}
             </ul>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
-import { searchApi } from "./shared";
+import { DEFAULT_ENDPOINT, searchApi } from "./shared";
 
 interface HistogramBucket {
   key: number;
@@ -28,9 +28,7 @@ function saveConfig(cfg: Record<string, string>) {
 
 export default function HistogramDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
@@ -132,11 +130,14 @@ export default function HistogramDemo() {
         />
       </div>
       {error && (
-        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}
-      <p className="mb-3 text-sm text-gray-500">
+      <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
         {buckets.length} bucket{buckets.length !== 1 ? "s" : ""} &middot;{" "}
         {totalHits} total document{totalHits !== 1 ? "s" : ""}
       </p>
@@ -144,7 +145,7 @@ export default function HistogramDemo() {
         <div className="space-y-1">
           {buckets.map((bucket) => (
             <div key={bucket.key} className="flex items-center gap-2 text-sm">
-              <span className="w-24 shrink-0 text-right tabular-nums text-gray-500">
+              <span className="w-24 shrink-0 text-right tabular-nums text-gray-600 dark:text-gray-300">
                 {bucket.key.toLocaleString()}
               </span>
               <div className="flex-1">
@@ -156,7 +157,7 @@ export default function HistogramDemo() {
                   }}
                 />
               </div>
-              <span className="w-12 shrink-0 tabular-nums text-gray-500">
+              <span className="w-12 shrink-0 tabular-nums text-gray-600 dark:text-gray-300">
                 {bucket.count}
               </span>
             </div>

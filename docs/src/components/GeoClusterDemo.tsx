@@ -2,7 +2,7 @@ import { Marker, Overlay, Map as PigeonMap, ZoomControl } from "pigeon-maps";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { SearchHit, SearchResult } from "./shared";
-import { searchApi } from "./shared";
+import { DEFAULT_ENDPOINT, searchApi } from "./shared";
 
 const STORAGE_KEY = "search-api-demo";
 const GEO_FIELD = "placeCoordinates";
@@ -41,9 +41,7 @@ function getCoords(hit: SearchHit): [number, number] | null {
 
 export default function GeoClusterDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
@@ -132,11 +130,14 @@ export default function GeoClusterDemo() {
         className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       />
       {error && (
-        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}
-      <p className="mb-2 text-sm text-gray-500">
+      <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
         {pins.length} pin{pins.length !== 1 ? "s" : ""} &middot; {totalHits}{" "}
         total result{totalHits !== 1 ? "s" : ""}
       </p>

@@ -6,3 +6,6 @@ pre-commit:
       run: bunx @biomejs/biome check --no-errors-on-unmatched {staged_files}
     typecheck:
       run: bunx tsc --noEmit
+    build-types:
+      glob: "src/**/*.ts"
+      run: bun run build:types && git add dist/

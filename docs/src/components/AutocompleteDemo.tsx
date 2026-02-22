@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { AutocompleteResult, SearchHit } from "./shared";
-import { searchApi } from "./shared";
+import { DEFAULT_ENDPOINT, searchApi } from "./shared";
 
 const STORAGE_KEY = "search-api-demo";
 const FACET_FIELDS = "placeCountry,placeRegion";
@@ -28,9 +28,7 @@ type Option =
 
 export default function AutocompleteDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
@@ -151,7 +149,7 @@ export default function AutocompleteDemo() {
           elements.push(
             <div
               key={`label-${opt.field}`}
-              className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400"
+              className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               {FACET_LABELS[opt.field] ?? opt.field}
             </div>,
@@ -165,7 +163,9 @@ export default function AutocompleteDemo() {
             <span className="text-gray-700 dark:text-gray-300">
               {opt.value}
             </span>
-            <span className="text-xs text-gray-400">{opt.count}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {opt.count}
+            </span>
           </div>,
         );
       } else {
@@ -182,7 +182,7 @@ export default function AutocompleteDemo() {
           elements.push(
             <div
               key="hits-label"
-              className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400"
+              className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Results
             </div>,
@@ -196,7 +196,7 @@ export default function AutocompleteDemo() {
             <span className="text-gray-900 dark:text-gray-100">
               {hitLabel(opt.hit)}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {opt.hit._score?.toFixed(1) ?? "—"}
             </span>
           </div>,
@@ -209,7 +209,7 @@ export default function AutocompleteDemo() {
       elements.push(
         <div
           key="footer"
-          className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-400 dark:border-gray-700"
+          className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400"
         >
           + {totalHits - hitCount} more results
         </div>,
@@ -247,7 +247,10 @@ export default function AutocompleteDemo() {
         )}
       </div>
       {error && (
-        <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}

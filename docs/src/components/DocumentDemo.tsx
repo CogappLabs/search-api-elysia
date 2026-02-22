@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
-import { searchApi } from "./shared";
+import { DEFAULT_ENDPOINT, searchApi } from "./shared";
 
 const STORAGE_KEY = "search-api-demo";
 
@@ -18,9 +18,7 @@ function saveConfig(cfg: Record<string, string>) {
 
 export default function DocumentDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
@@ -93,7 +91,10 @@ export default function DocumentDemo() {
         </button>
       </div>
       {error && (
-        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}

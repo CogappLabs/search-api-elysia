@@ -1,0 +1,184 @@
+---
+title: InstantSearch
+description: Use Algolia's InstantSearch.js widgets with a custom search client backed by Search API.
+---
+
+import InstantSearchDemo from "@/components/InstantSearchDemo.tsx";
+
+## Try it
+
+<InstantSearchDemo client:only="react" />
+
+```
+POST /:handle/instantsearch
+```
+
+The InstantSearch endpoint accepts Algolia's multi-query format, so [InstantSearch.js](https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/js/) widgets work out of the box with a small custom search client.
+
+**Supported widgets:** SearchBox, Hits, Highlight, Pagination, HitsPerPage, RefinementList, CurrentRefinements, ClearRefinements, Stats, Configure.
+
+## Custom search client
+
+Create a search client that points at your Search API instance instead of Algolia:
+
+```js
+function createSearchClient(endpoint, index, token) {
+  return {
+    search(requests) {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      return fetch(`${endpoint}/${index}/instantsearch`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ requests }),
+      }).then((res) => res.json());
+    },
+  };
+}
+```
+
+Then pass it to `<InstantSearch>`:
+
+```jsx
+import {
+  ClearRefinements, CurrentRefinements, Hits, HitsPerPage,
+  InstantSearch, Pagination, RefinementList, SearchBox, Stats,
+} from "react-instantsearch";
+
+const searchClient = createSearchClient("http://localhost:3000", "my_index");
+
+function App() {
+  return (
+    <InstantSearch searchClient={searchClient} indexName="my_index">
+      <SearchBox />
+      <Stats />
+      <HitsPerPage items={[
+        { label: "10 per page", value: 10 },
+        { label: "20 per page", value: 20, default: true },
+      ]} />
+      <CurrentRefinements />
+      <ClearRefinements />
+      <RefinementList attribute="category" />
+      <Hits />
+      <Pagination />
+    </InstantSearch>
+  );
+}
+```
+
+The same approach works with Vue InstantSearch and Angular InstantSearch — only the `searchClient` factory is needed.
+
+## Request format
+
+The endpoint expects a JSON body with a `requests` array. Each request corresponds to one widget query:
+
+```json
+{
+  "requests": [
+    {
+      "indexName": "my_index",
+      "query": "castle",
+      "params": {
+        "page": 0,
+        "hitsPerPage": 20,
+        "facets": ["category"],
+        "facetFilters": [["category:Historic", "category:Castle"], "country:Scotland"],
+        "highlightPreTag": "<em>",
+        "highlightPostTag": "</em>"
+      }
+    }
+  ]
+}
+```
+
+### Supported params
+
+| Parameter              | Type                 | Default    | Description                                                                    |
+| ---------------------- | -------------------- | ---------- | ------------------------------------------------------------------------------ |
+| `query`                | `string`             | `""`       | Search query text.                                                             |
+| `page`                 | `number`             | `0`        | Page number (0-indexed, as Algolia expects).                                   |
+| `hitsPerPage`          | `number`             | `20`       | Results per page.                                                              |
+| `facets`               | `string[]`           | —          | Fields to aggregate. `["*"]` falls back to config defaults.                    |
+| `facetFilters`         | `(string\|string[])[]` | —        | Facet filters. Outer = AND, inner array = OR. Format: `"field:value"`.         |
+| `numericFilters`       | `string[]`           | —          | Numeric range filters. Format: `"field>=10"`, `"field<=100"`.                  |
+| `attributesToRetrieve` | `string[]`           | all fields | Fields to return in each hit.                                                  |
+| `highlightPreTag`      | `string`             | `<em>`     | Opening tag for highlights.                                                    |
+| `highlightPostTag`     | `string`             | `</em>`    | Closing tag for highlights.                                                    |
+
+## Response format
+
+Each result in the response array follows the Algolia format:
+
+```json
+{
+  "results": [
+    {
+      "hits": [
+        {
+          "objectID": "498",
+          "title": "Stirling Castle",
+          "_highlightResult": {
+            "title": {
+              "value": "Stirling <em>Castle</em>",
+              "matchLevel": "full"
+            }
+          }
+        }
+      ],
+      "nbHits": 42,
+      "nbPages": 3,
+      "page": 0,
+      "hitsPerPage": 20,
+      "facets": {
+        "category": { "Historic": 18, "Castle": 12 }
+      },
+      "processingTimeMS": 5,
+      "query": "castle",
+      "exhaustiveNbHits": true
+    }
+  ]
+}
+```
+
+| Field              | Type                                       | Description                        |
+| ------------------ | ------------------------------------------ | ---------------------------------- |
+| `hits`             | `object[]`                                 | Matching documents with highlights. |
+| `nbHits`           | `number`                                   | Total matching documents.          |
+| `nbPages`          | `number`                                   | Total pages.                       |
+| `page`             | `number`                                   | Current page (0-indexed).          |
+| `hitsPerPage`      | `number`                                   | Results per page.                  |
+| `facets`           | `Record<string, Record<string, number>>`   | Facet counts in Algolia format.    |
+| `processingTimeMS` | `number`                                   | Server-side processing time.       |
+| `query`            | `string`                                   | Echoed query string.               |
+| `exhaustiveNbHits` | `boolean`                                  | Always `true`.                     |
+
+## Translation details
+
+The endpoint translates between InstantSearch conventions and Search API internals:
+
+- **Page numbering**: 0-indexed (Algolia) ↔ 1-indexed (Search API)
+- **Facets**: `{field: {value: count}}` (Algolia) ↔ `{field: [{value, count}]}` (Search API)
+- **Highlights**: `<em>` tags with `matchLevel` (Algolia) ↔ `<mark>` tags in arrays (Search API)
+- **Filters**: `facetFilters` array syntax ↔ `filters` object syntax
+- **Field aliases**: Applied automatically when configured — aliases work in facets, filters, and highlight keys
+
+Config-level `boosts`, `searchableFields`, and default `facets` are applied automatically.
+
+## V1 limitations
+
+The following features are **not yet supported** and will be added in future versions:
+
+- `searchForFacetValues` endpoint
+- Negated `facetFilters` (entries with leading `-` are skipped)
+- String `filters` syntax (e.g. `"price > 10 AND category:Books"`)
+- Geo search params (`aroundLatLng`, `insideBoundingBox`)
+- `tagFilters`, `distinct`, `optionalFilters`
+
+## Error responses
+
+| Status | Condition                          |
+| ------ | ---------------------------------- |
+| `401`  | Missing or invalid bearer token    |
+| `404`  | Index handle not found             |
+| `422`  | Invalid request body               |

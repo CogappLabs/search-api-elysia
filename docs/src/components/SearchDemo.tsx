@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "./ApiConfig";
 import type { SearchResult } from "./shared";
-import { hitDisplayText, searchApi, stripHtml } from "./shared";
+import {
+  DEFAULT_ENDPOINT,
+  hitDisplayText,
+  searchApi,
+  stripHtml,
+} from "./shared";
 
 const STORAGE_KEY = "search-api-demo";
 
@@ -19,9 +24,7 @@ function saveConfig(cfg: Record<string, string>) {
 
 export default function SearchDemo() {
   const stored = loadConfig();
-  const [endpoint, setEndpoint] = useState(
-    stored.endpoint ?? "https://search-api-elysia-production.up.railway.app",
-  );
+  const [endpoint, setEndpoint] = useState(stored.endpoint ?? DEFAULT_ENDPOINT);
   const [index, setIndex] = useState(
     stored.index ?? "craft_search_plugin_labs",
   );
@@ -100,13 +103,16 @@ export default function SearchDemo() {
         className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       />
       {error && (
-        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <p
+          role="alert"
+          className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        >
           {error}
         </p>
       )}
       {result && (
         <>
-          <p className="mb-3 text-sm text-gray-500">
+          <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
             {result.totalHits} result{result.totalHits !== 1 ? "s" : ""}
             {result.totalPages > 1 &&
               ` · page ${result.page} of ${result.totalPages}`}
@@ -121,11 +127,13 @@ export default function SearchDemo() {
                   <span className="font-medium text-gray-900 dark:text-gray-100">
                     {stripHtml(hitDisplayText(hit))}
                   </span>
-                  <span className="shrink-0 text-xs text-gray-400">
+                  <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
                     {hit._score?.toFixed(1) ?? "—"}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">{hit.objectID}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {hit.objectID}
+                </p>
               </li>
             ))}
           </ul>
