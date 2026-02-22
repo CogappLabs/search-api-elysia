@@ -4,6 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
+	site: "https://cogapplabs.github.io",
+	base: "/search-api-elysia",
 	integrations: [
 		starlight({
 			title: "Search API",
@@ -12,7 +14,7 @@ export default defineConfig({
 				{
 					icon: "github",
 					label: "GitHub",
-					href: "https://github.com/your-org/search-api-bun",
+					href: "https://github.com/CogappLabs/search-api-elysia",
 				},
 			],
 			sidebar: [
