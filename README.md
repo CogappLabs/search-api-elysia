@@ -6,6 +6,16 @@ A unified REST search interface over Elasticsearch, OpenSearch, and Meilisearch 
 
 **[Documentation](https://cogapplabs.github.io/search-api-elysia/)**
 
+## Why an API layer?
+
+Talking directly to Elasticsearch from a frontend means every project needs to learn the query DSL, handle auth, and deal with engine-specific response formats. A thin API layer solves this:
+
+- **Common interface across projects** — define an index in YAML and every project gets the same REST endpoints with the same response shapes.
+- **No search-engine expertise required** — frontend developers call simple query-string endpoints instead of constructing Elasticsearch JSON queries.
+- **Easy frontend wiring** — returns flat, predictable JSON designed for UI consumption. Works with InstantSearch.js, React, or a plain `fetch` call.
+- **Security** — credentials stay server-side; clients never touch the search engine directly.
+- **Swap engines without changing clients** — migrating from Elasticsearch to Meilisearch is a config change, not a rewrite.
+
 ## Features
 
 - Multiple search engine backends: Elasticsearch, OpenSearch, Meilisearch
