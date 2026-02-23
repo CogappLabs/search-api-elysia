@@ -40,6 +40,7 @@ export default defineConfig({
 						{ label: "Autocomplete", slug: "reference/autocomplete" },
 						{ label: "Documents", slug: "reference/documents" },
 						{ label: "Facets", slug: "reference/facets" },
+						{ label: "Disjunctive Facets", slug: "features/disjunctive-facets" },
 						{ label: "Filters", slug: "features/filters" },
 						{ label: "Histograms", slug: "features/histograms" },
 						{ label: "Geo Map", slug: "features/geo-map" },

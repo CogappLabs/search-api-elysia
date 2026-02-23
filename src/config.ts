@@ -15,7 +15,8 @@ const IndexDefaultsSchema = t.Object({
 const FieldConfigSchema = t.Object({
   weight: t.Optional(t.Number({ exclusiveMinimum: 0 })),
   searchable: t.Optional(t.Boolean()),
-  esField: t.Optional(t.String()),
+  field: t.Optional(t.String()),
+  nestedPath: t.Optional(t.String()),
 });
 
 const IndexConfigSchema = t.Object({

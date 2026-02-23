@@ -370,11 +370,11 @@ declare const app: Elysia<"", {
                             error: string;
                         };
                         200: {
+                            field: string;
                             values: {
                                 value: string;
                                 count: number;
                             }[];
-                            field: string;
                         };
                         400: {
                             error: string;

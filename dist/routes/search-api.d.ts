@@ -264,11 +264,11 @@ export declare function searchApiRoutes(engines: Map<string, SearchEngine>, conf
                             error: string;
                         };
                         200: {
+                            field: string;
                             values: {
                                 value: string;
                                 count: number;
                             }[];
-                            field: string;
                         };
                         400: {
                             error: string;

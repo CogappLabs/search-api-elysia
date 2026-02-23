@@ -192,7 +192,7 @@ indexes:
     expect(defaults?.suggestField).toBe("title");
   });
 
-  it("parses fields config with weight, searchable, and esField", () => {
+  it("parses fields config with weight, searchable, and field", () => {
     const path = writeTempConfig(`
 indexes:
   test:
@@ -206,13 +206,13 @@ indexes:
         weight: 2
         searchable: true
       country:
-        esField: placeCountry
+        field: placeCountry
 `);
     const config = loadConfig(path);
     expect(config.indexes.test?.fields).toEqual({
       title: { weight: 10 },
       description: { weight: 2, searchable: true },
-      country: { esField: "placeCountry" },
+      country: { field: "placeCountry" },
     });
   });
 
@@ -242,7 +242,7 @@ indexes:
     expect(config.indexes.test?.indexName).toBe("my_index");
   });
 
-  it("parses fields with esField aliases", () => {
+  it("parses fields with field aliases", () => {
     const path = writeTempConfig(`
 indexes:
   test:
@@ -251,16 +251,16 @@ indexes:
     indexName: my_index
     fields:
       country:
-        esField: placeCountry
+        field: placeCountry
       region:
-        esField: placeRegion
+        field: placeRegion
 `);
     const config = loadConfig(path);
     expect(config.indexes.test?.fields?.country).toEqual({
-      esField: "placeCountry",
+      field: "placeCountry",
     });
     expect(config.indexes.test?.fields?.region).toEqual({
-      esField: "placeRegion",
+      field: "placeRegion",
     });
   });
 
@@ -317,10 +317,10 @@ describe("deriveFromFields", () => {
     expect(result.searchableFields).toEqual([]);
   });
 
-  it("derives aliases from esField entries", () => {
+  it("derives aliases from field entries", () => {
     const result = deriveFromFields({
-      country: { esField: "placeCountry" },
-      region: { esField: "placeRegion" },
+      country: { field: "placeCountry" },
+      region: { field: "placeRegion" },
     });
     expect(result.aliases).toEqual({
       country: "placeCountry",
@@ -331,7 +331,7 @@ describe("deriveFromFields", () => {
   it("derives boosts from weight entries using ES field names", () => {
     const result = deriveFromFields({
       title: { weight: 10 },
-      country: { esField: "placeCountry", weight: 3 },
+      country: { field: "placeCountry", weight: 3 },
     });
     expect(result.boosts).toEqual({ title: 10, placeCountry: 3 });
   });
@@ -353,11 +353,11 @@ describe("deriveFromFields", () => {
     expect(result.searchableFields).toEqual([]);
   });
 
-  it("throws when two fields map to the same esField", () => {
+  it("throws when two fields map to the same field", () => {
     expect(() =>
       deriveFromFields({
-        country: { esField: "placeCountry" },
-        nation: { esField: "placeCountry" },
+        country: { field: "placeCountry" },
+        nation: { field: "placeCountry" },
       }),
     ).toThrow('both map to ES field "placeCountry"');
   });

@@ -32,7 +32,13 @@ const LOCAL_HANDLES = [
 ];
 
 /** Handles that have field aliases configured (country→placeCountry, region→placeRegion). */
-const ALIAS_HANDLES = new Set(["local-es", "local-opensearch", "craft_search_plugin_labs"]);
+const ALIAS_HANDLES = new Set([
+  "local-es", "local-opensearch", "local-meilisearch", "local-typesense",
+  "craft_search_plugin_labs",
+]);
+
+/** Handles with nestedPath configured (facilities.type → facilityType). */
+const NESTED_HANDLES = new Set(["local-es", "local-opensearch"]);
 
 /** Handles that have suggestField configured. */
 const SUGGEST_HANDLES = new Set(["local-es", "local-opensearch", "craft_search_plugin_labs"]);
@@ -660,12 +666,106 @@ async function testHandle(handle: string) {
       assert(body.values.length > 0, "Expected values via alias");
     });
 
-    await test(`[${handle}] sort via alias`, async () => {
-      const sort = JSON.stringify({ country: "asc" });
+    // Sort via alias — only ES/OpenSearch (Meili/Typesense don't have placeCountry as sortable)
+    if (isElasticLike(engine)) {
+      await test(`[${handle}] sort via alias`, async () => {
+        const sort = JSON.stringify({ country: "asc" });
+        const res = await fetch(
+          `${BASE}/${handle}/search?q=&sort=${encodeURIComponent(sort)}`,
+        );
+        assert(res.status === 200, `Expected 200, got ${res.status}`);
+      });
+    }
+  }
+
+  // ── Nested Facilities (ES/OpenSearch with nestedPath) ──────────
+
+  if (NESTED_HANDLES.has(handle)) {
+    console.log("\n--- Nested Facilities ---");
+    await test(`[${handle}] facets on nested field via alias`, async () => {
       const res = await fetch(
-        `${BASE}/${handle}/search?q=&sort=${encodeURIComponent(sort)}`,
+        `${BASE}/${handle}/search?q=&facets=facilityType`,
       );
       assert(res.status === 200, `Expected 200, got ${res.status}`);
+      const body = await res.json();
+      assert(
+        body.facets.facilityType !== undefined,
+        "Expected facilityType facet",
+      );
+      assert(
+        body.facets.facilityType.length > 0,
+        "Expected facility type values",
+      );
+      const types = body.facets.facilityType.map(
+        (f: { value: string }) => f.value,
+      );
+      console.log(`        -> ${types.length} facility types: ${types.join(", ")}`);
+    });
+
+    await test(`[${handle}] filter on nested field via alias`, async () => {
+      const filters = JSON.stringify({ facilityType: "cafe" });
+      const res = await fetch(
+        `${BASE}/${handle}/search?q=&filters=${encodeURIComponent(filters)}`,
+      );
+      assert(res.status === 200, `Expected 200, got ${res.status}`);
+      const body = await res.json();
+      assert(body.totalHits > 0, "Expected results for cafe filter");
+      console.log(
+        `        -> ${body.totalHits} places with a cafe`,
+      );
+    });
+
+    await test(`[${handle}] disjunctive nested facet + filter`, async () => {
+      const filters = JSON.stringify({ facilityType: "cafe" });
+      const res = await fetch(
+        `${BASE}/${handle}/search?q=&facets=facilityType&filters=${encodeURIComponent(filters)}`,
+      );
+      assert(res.status === 200, `Expected 200, got ${res.status}`);
+      const body = await res.json();
+      assert(
+        body.facets.facilityType !== undefined,
+        "Expected facilityType facet with disjunctive counts",
+      );
+      // Disjunctive: should show ALL facility types, not just "cafe"
+      const types = body.facets.facilityType.map(
+        (f: { value: string }) => f.value,
+      );
+      assert(
+        types.length > 1,
+        `Expected disjunctive counts (multiple types), got: ${types.join(", ")}`,
+      );
+      console.log(
+        `        -> disjunctive: ${types.length} types shown while filtering "cafe"`,
+      );
+    });
+
+    await test(`[${handle}] facet endpoint on nested field`, async () => {
+      const res = await fetch(`${BASE}/${handle}/facets/facilityType`);
+      assert(res.status === 200, `Expected 200, got ${res.status}`);
+      const body = await res.json();
+      assert(
+        body.field === "facilityType",
+        `Expected field "facilityType", got "${body.field}"`,
+      );
+      assert(body.values.length > 0, "Expected facility type values");
+      console.log(
+        `        -> ${body.values.length} facility types via facet endpoint`,
+      );
+    });
+
+    await test(`[${handle}] nested filter + non-nested facet`, async () => {
+      const filters = JSON.stringify({ facilityType: "guided_tour" });
+      const res = await fetch(
+        `${BASE}/${handle}/search?q=&facets=country&filters=${encodeURIComponent(filters)}`,
+      );
+      assert(res.status === 200, `Expected 200, got ${res.status}`);
+      const body = await res.json();
+      assert(body.totalHits > 0, "Expected results for guided_tour filter");
+      const countryFacet = body.facets.country;
+      assert(countryFacet !== undefined, "Expected country facet");
+      console.log(
+        `        -> ${body.totalHits} places with guided tours across ${countryFacet.length} countries`,
+      );
     });
   }
 

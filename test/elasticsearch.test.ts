@@ -533,6 +533,235 @@ describe("ElasticsearchEngine sort field resolution", () => {
   });
 });
 
+describe("ElasticsearchEngine disjunctive faceting pattern", () => {
+  it("searchFacetValues applies filters to narrow facet context", async () => {
+    const engine = createEngine(createMockClient());
+    await engine.searchFacetValues("category", "", {
+      filters: { period: "modern" },
+    });
+    expect(lastSearchBody.query.bool.filter).toEqual([
+      { term: { period: "modern" } },
+    ]);
+    expect(lastSearchBody.aggs.facet_values).toEqual({
+      terms: { field: "category", size: 20 },
+    });
+  });
+
+  it("searchFacetValues with no filters returns unscoped counts", async () => {
+    const engine = createEngine(createMockClient());
+    await engine.searchFacetValues("category", "");
+    expect(lastSearchBody.query).toEqual({ match_all: {} });
+  });
+
+  it("searchFacetValues wraps array filter values as terms query", async () => {
+    const engine = createEngine(createMockClient());
+    await engine.searchFacetValues("category", "", {
+      filters: { period: ["modern", "classical"] },
+    });
+    expect(lastSearchBody.query.bool.filter).toEqual([
+      { terms: { period: ["modern", "classical"] } },
+    ]);
+  });
+});
+
+describe("ElasticsearchEngine nested aggregations", () => {
+  const nestedConfig: Partial<IndexConfig> = {
+    fields: {
+      facilityName: {
+        field: "facilities.name.keyword",
+        nestedPath: "facilities",
+      },
+    },
+  };
+
+  it("wraps aggregation in nested", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.search("", {
+      facets: ["facilities.name.keyword"],
+    });
+    expect(lastSearchBody.aggs["facilities.name.keyword"]).toEqual({
+      nested: { path: "facilities" },
+      aggs: {
+        "facilities.name.keyword": {
+          terms: { field: "facilities.name.keyword", size: 100 },
+        },
+      },
+    });
+  });
+
+  it("wraps filter in nested query", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.search("", {
+      filters: { "facilities.name.keyword": "Main Cafe" },
+    });
+    expect(lastSearchBody.query.bool.filter).toEqual([
+      {
+        nested: {
+          path: "facilities",
+          query: {
+            term: { "facilities.name.keyword": "Main Cafe" },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("does not wrap non-nested fields", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.search("", {
+      facets: ["category"],
+      filters: { period: "modern" },
+    });
+    // Non-nested filter is plain
+    expect(lastSearchBody.query.bool.filter).toEqual([
+      { term: { period: "modern" } },
+    ]);
+    // Non-nested facet is plain
+    expect(lastSearchBody.aggs.category).toEqual({
+      terms: { field: "category", size: 100 },
+    });
+  });
+
+  it("filter + nested agg wrapping preserves correct nesting order", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.search("", {
+      facets: ["facilities.name.keyword", "category"],
+      filters: { category: "painting" },
+    });
+
+    // Nested facet should be wrapped with the category filter, then nested inside
+    expect(lastSearchBody.aggs["facilities.name.keyword"]).toEqual({
+      filter: {
+        bool: { filter: [{ term: { category: "painting" } }] },
+      },
+      aggs: {
+        "facilities.name.keyword": {
+          nested: { path: "facilities" },
+          aggs: {
+            "facilities.name.keyword": {
+              terms: {
+                field: "facilities.name.keyword",
+                size: 100,
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it("nested filter in post_filter", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.search("", {
+      facets: ["facilities.name.keyword"],
+      filters: { "facilities.name.keyword": "Main Cafe" },
+    });
+    expect(lastSearchBody.post_filter).toEqual({
+      bool: {
+        filter: [
+          {
+            nested: {
+              path: "facilities",
+              query: {
+                term: {
+                  "facilities.name.keyword": "Main Cafe",
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it("extractBuckets handles filter+nested 3-level nesting", async () => {
+    const client = createMockClient({
+      "facilities.name.keyword": {
+        doc_count: 100,
+        "facilities.name.keyword": {
+          doc_count: 80,
+          "facilities.name.keyword": {
+            buckets: [
+              { key: "Main Cafe", doc_count: 42 },
+              { key: "Car Park", doc_count: 18 },
+            ],
+          },
+        },
+      },
+    });
+    const engine = createEngine(client, nestedConfig);
+    const result = await engine.search("", {
+      facets: ["facilities.name.keyword"],
+      filters: {
+        "facilities.name.keyword": "Main Cafe",
+        category: "painting",
+      },
+    });
+    expect(result.facets["facilities.name.keyword"]).toEqual([
+      { value: "Main Cafe", count: 42 },
+      { value: "Car Park", count: 18 },
+    ]);
+  });
+
+  it("searchFacetValues wraps nested agg", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.searchFacetValues("facilities.name.keyword", "");
+    expect(lastSearchBody.aggs.facet_values).toEqual({
+      nested: { path: "facilities" },
+      aggs: {
+        facet_values: {
+          terms: {
+            field: "facilities.name.keyword",
+            size: 20,
+          },
+        },
+      },
+    });
+  });
+
+  it("searchFacetValues wraps nested filter", async () => {
+    const engine = createEngine(createMockClient(), nestedConfig);
+    await engine.searchFacetValues("category", "", {
+      filters: { "facilities.name.keyword": "Main Cafe" },
+    });
+    expect(lastSearchBody.query.bool.filter).toEqual([
+      {
+        nested: {
+          path: "facilities",
+          query: {
+            term: {
+              "facilities.name.keyword": "Main Cafe",
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("searchFacetValues extracts nested response from deeper path", async () => {
+    const client = createMockClient({
+      facet_values: {
+        doc_count: 80,
+        facet_values: {
+          buckets: [
+            { key: "Main Cafe", doc_count: 42 },
+            { key: "Car Park", doc_count: 18 },
+          ],
+        },
+      },
+    });
+    const engine = createEngine(client, nestedConfig);
+    const result = await engine.searchFacetValues(
+      "facilities.name.keyword",
+      "",
+    );
+    expect(result).toEqual([
+      { value: "Main Cafe", count: 42 },
+      { value: "Car Park", count: 18 },
+    ]);
+  });
+});
+
 describe("ElasticsearchEngine facet response normalization", () => {
   it("normalizes plain aggregation response", async () => {
     const client = createMockClient({

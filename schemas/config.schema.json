@@ -45,9 +45,13 @@
           "type": "boolean",
           "description": "Whether this field is included in search queries (without boosting). Only takes effect when weight is not set."
         },
-        "esField": {
+        "field": {
           "type": "string",
           "description": "The real Elasticsearch field name. When set, the key acts as a consumer-friendly alias that is translated at the API layer."
+        },
+        "nestedPath": {
+          "type": "string",
+          "description": "Elasticsearch nested path for fields inside nested object arrays. When set, aggregations and filters on this field are automatically wrapped in nested queries. Only used by Elasticsearch/OpenSearch engines."
         }
       },
       "additionalProperties": false
@@ -92,7 +96,7 @@
         },
         "fields": {
           "type": "object",
-          "description": "Unified field configuration. Each key is a field name (or alias when esField is set). Controls boost weights, searchability, and field name aliasing.",
+          "description": "Unified field configuration. Each key is a field name (or alias when field is set). Controls boost weights, searchability, and field name aliasing.",
           "additionalProperties": {
             "$ref": "#/$defs/fieldConfig"
           }
@@ -154,8 +158,8 @@
           "fields": {
             "title": { "weight": 10 },
             "description": { "weight": 2 },
-            "country": { "esField": "placeCountry" },
-            "region": { "esField": "placeRegion" }
+            "country": { "field": "placeCountry" },
+            "region": { "field": "placeRegion" }
           }
         }
       }

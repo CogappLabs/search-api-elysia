@@ -29,7 +29,7 @@ railway status                    # check project/environment/service
 
 ## Overview
 
-Bun + Elysia search API that provides a unified REST interface over external search engine indexes (Elasticsearch, OpenSearch, and Meilisearch). Configuration is YAML-driven — each configured index gets its own set of routes under `/:handle/`.
+Bun + Elysia search API that provides a unified REST interface over external search engine indexes (Elasticsearch, OpenSearch, Meilisearch, and Typesense). Configuration is YAML-driven — each configured index gets its own set of routes under `/:handle/`.
 
 ## Architecture
 
@@ -45,9 +45,9 @@ New engines are registered in the factory map in `engines/index.ts`. See `docs/s
 **Config loading** (`src/config.ts`): Reads `config.yaml`, interpolates `${ENV_VAR}` references, validates against TypeBox schemas. Copy `config.example.yaml` to get started. JSON schema at `schemas/config.schema.json` provides editor autocompletion (VS Code picks this up via `.vscode/settings.json`).
 
 **Unified fields config** (`fields` in config.yaml): Field weights, searchability, and aliases are all defined under a single `fields` key per index. At startup, `deriveFromFields()` in `src/index.ts` splits this into three derived maps:
-- `aliases` — fields with `esField` (fed to `FieldAliasMap`)
-- `boosts` — fields with `weight` (keyed by ES field name, passed to routes)
-- `searchableFields` — fields with `searchable: true` but no `weight` (ES field names)
+- `aliases` — fields with `field` (fed to `FieldAliasMap`)
+- `boosts` — fields with `weight` (keyed by real field name, passed to routes)
+- `searchableFields` — fields with `searchable: true` but no `weight` (real field names)
 
 These derived maps are passed to `searchApiRoutes()` alongside the engine and config maps. The `weight` property implies searchable — setting both `weight` and `searchable` on a field will only use `weight`.
 
@@ -55,7 +55,7 @@ These derived maps are passed to `searchApiRoutes()` alongside the engine and co
 
 **Geo utilities** (`src/geo.ts`): `geotileToLatLng()` converts ES geotile grid keys (`zoom/x/y`) to lat/lng centroids via Web Mercator tile math.
 
-**Field aliases** (`src/field-aliases.ts`): `FieldAliasMap` class provides bidirectional alias↔field name translation. Used at the route layer — inbound params are translated before the engine call, outbound response keys are translated back. Zero-overhead passthrough when no aliases are configured. Duplicate `esField` targets are rejected at startup. The `esField` config key name is ES-specific but the alias mechanism works identically for all engines.
+**Field aliases** (`src/field-aliases.ts`): `FieldAliasMap` class provides bidirectional alias↔real field name translation. Used at the route layer — inbound params are translated before the engine call, outbound response keys are translated back. Zero-overhead passthrough when no aliases are configured. Duplicate `field` targets are rejected at startup. The alias mechanism works identically for all engines.
 
 **Request flow**: `src/index.ts` loads config → calls `deriveFromFields()` per index → creates engine instances, `FieldAliasMap` instances, and derived boost/searchable maps → mounts routes → applies bearer token auth (optional), CORS, and error handling as Elysia middleware.
 

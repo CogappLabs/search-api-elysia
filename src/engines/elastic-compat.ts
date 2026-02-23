@@ -32,6 +32,7 @@ export abstract class ElasticCompatEngine implements SearchEngine {
   protected client: ElasticCompatClient;
   protected indexName: string;
   protected suggestField: string | undefined;
+  protected nestedPaths: Map<string, string> = new Map();
   private mappingCache: Record<string, unknown> | null = null;
 
   constructor(config: IndexConfig, client?: ElasticCompatClient) {
@@ -40,6 +41,13 @@ export abstract class ElasticCompatEngine implements SearchEngine {
       ? config.indexName.join(",")
       : config.indexName;
     this.suggestField = config.defaults?.suggestField;
+    if (config.fields) {
+      for (const [name, cfg] of Object.entries(config.fields)) {
+        if (cfg.nestedPath) {
+          this.nestedPaths.set(cfg.field ?? name, cfg.nestedPath);
+        }
+      }
+    }
   }
 
   /** Create the engine-specific client instance. */
@@ -50,6 +58,15 @@ export abstract class ElasticCompatEngine implements SearchEngine {
 
   /** Check if an error represents a 404 (different shapes per client). */
   protected abstract isNotFoundError(err: unknown): boolean;
+
+  private wrapNestedIfNeeded(
+    field: string,
+    clause: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const nestedPath = this.nestedPaths.get(field);
+    if (!nestedPath) return clause;
+    return { nested: { path: nestedPath, query: clause } };
+  }
 
   async search(query: string, options: SearchOptions): Promise<SearchResult> {
     const page = options.page ?? 1;
@@ -84,7 +101,10 @@ export abstract class ElasticCompatEngine implements SearchEngine {
 
     if (options.filters) {
       for (const [field, value] of Object.entries(options.filters)) {
-        const clause = buildFilterClause(field, value);
+        const clause = this.wrapNestedIfNeeded(
+          field,
+          buildFilterClause(field, value),
+        );
         if (facetSet.has(field)) {
           const existing = facetFilterMap.get(field) ?? [];
           existing.push(clause);
@@ -102,7 +122,9 @@ export abstract class ElasticCompatEngine implements SearchEngine {
       filter.push(...nonFacetFilters);
     } else if (options.filters) {
       for (const [field, value] of Object.entries(options.filters)) {
-        filter.push(buildFilterClause(field, value));
+        filter.push(
+          this.wrapNestedIfNeeded(field, buildFilterClause(field, value)),
+        );
       }
     }
 
@@ -160,7 +182,11 @@ export abstract class ElasticCompatEngine implements SearchEngine {
     const aggs: Record<string, Record<string, unknown>> = {};
     if (options.facets) {
       for (const facet of options.facets) {
+        const nestedPath = this.nestedPaths.get(facet);
         const termsAgg = { terms: { field: facet, size: 100 } };
+        const innerAgg = nestedPath
+          ? { nested: { path: nestedPath }, aggs: { [facet]: termsAgg } }
+          : termsAgg;
 
         if (hasFacetFilters) {
           // Collect all facet filter clauses EXCEPT this facet's own
@@ -174,14 +200,14 @@ export abstract class ElasticCompatEngine implements SearchEngine {
           if (otherClauses.length > 0) {
             aggs[facet] = {
               filter: { bool: { filter: otherClauses } },
-              aggs: { [facet]: termsAgg },
+              aggs: { [facet]: innerAgg },
             };
           } else {
-            // No other facet filters — use plain terms agg
-            aggs[facet] = termsAgg;
+            // No other facet filters — use plain agg
+            aggs[facet] = innerAgg;
           }
         } else {
-          aggs[facet] = termsAgg;
+          aggs[facet] = innerAgg;
         }
       }
     }
@@ -502,13 +528,26 @@ export abstract class ElasticCompatEngine implements SearchEngine {
     const filter: Record<string, unknown>[] = [];
     if (options?.filters) {
       for (const [f, value] of Object.entries(options.filters)) {
-        if (Array.isArray(value)) {
-          filter.push({ terms: { [f]: value } });
-        } else {
-          filter.push({ term: { [f]: value } });
-        }
+        const clause = Array.isArray(value)
+          ? { terms: { [f]: value } }
+          : { term: { [f]: value } };
+        filter.push(this.wrapNestedIfNeeded(f, clause));
       }
     }
+
+    const nestedPath = this.nestedPaths.get(field);
+    const termsAgg: Record<string, unknown> = {
+      terms: {
+        field: field,
+        size: maxValues,
+        ...(query.trim()
+          ? { include: `.*${caseInsensitiveRegex(query)}.*` }
+          : {}),
+      },
+    };
+    const facetAgg = nestedPath
+      ? { nested: { path: nestedPath }, aggs: { facet_values: termsAgg } }
+      : termsAgg;
 
     const body: Record<string, unknown> = {
       index: this.indexName,
@@ -517,15 +556,7 @@ export abstract class ElasticCompatEngine implements SearchEngine {
         ? { query: { bool: { filter } } }
         : { query: { match_all: {} } }),
       aggs: {
-        facet_values: {
-          terms: {
-            field: field,
-            size: maxValues,
-            ...(query.trim()
-              ? { include: `.*${caseInsensitiveRegex(query)}.*` }
-              : {}),
-          },
-        },
+        facet_values: facetAgg,
       },
     };
 
@@ -534,14 +565,19 @@ export abstract class ElasticCompatEngine implements SearchEngine {
       aggregations?: {
         facet_values?: {
           buckets?: Array<{ key: string; doc_count: number }>;
+          facet_values?: {
+            buckets?: Array<{ key: string; doc_count: number }>;
+          };
         };
       };
     }>(rawResponse);
 
     const agg = response.aggregations?.facet_values;
-    if (!agg?.buckets) return [];
+    // For nested fields, buckets are one level deeper
+    const buckets = agg?.facet_values?.buckets ?? agg?.buckets;
+    if (!buckets) return [];
 
-    return agg.buckets.map((b) => ({
+    return buckets.map((b) => ({
       value: String(b.key),
       count: b.doc_count,
     }));
@@ -610,7 +646,7 @@ function buildFilterClause(
 
 type AggBucket = { key: string; doc_count: number };
 
-/** Extract buckets from a plain or wrapped (filter) aggregation response. */
+/** Extract buckets from a plain, wrapped (filter), nested, or filter+nested aggregation response. */
 function extractBuckets(name: string, agg: unknown): AggBucket[] | undefined {
   const obj = agg as Record<string, unknown>;
   // Plain shape: { buckets: [...] }
@@ -618,9 +654,17 @@ function extractBuckets(name: string, agg: unknown): AggBucket[] | undefined {
     return obj.buckets as AggBucket[];
   }
   // Wrapped shape: { doc_count: N, [name]: { buckets: [...] } }
+  // Also handles nested shape: { [name]: { buckets: [...] } }
   const nested = obj[name] as Record<string, unknown> | undefined;
   if (nested && Array.isArray(nested.buckets)) {
     return nested.buckets as AggBucket[];
+  }
+  // Filter + nested shape: { doc_count: N, [name]: { doc_count: N, [name]: { buckets: [...] } } }
+  if (nested) {
+    const deepNested = nested[name] as Record<string, unknown> | undefined;
+    if (deepNested && Array.isArray(deepNested.buckets)) {
+      return deepNested.buckets as AggBucket[];
+    }
   }
   return undefined;
 }

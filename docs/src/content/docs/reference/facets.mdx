@@ -71,6 +71,14 @@ curl "https://search-api-elysia-production.up.railway.app/collections/facets/reg
 
 The `filters` param in the last example decoded: `{"country":"Scotland"}`
 
+## Disjunctive facets
+
+For OR-mode facet filtering (where selecting a value doesn't reduce its own counts), exclude the current field from `filters`. See [Disjunctive Facets](../../features/disjunctive-facets/) for the full pattern.
+
+## Nested fields
+
+Fields inside Elasticsearch [nested objects](https://www.elastic.co/guide/en/elasticsearch/reference/current/nested.html) work automatically when [`nestedPath`](../../guides/configuration/#nested-fields-via-nestedpath) is configured. The API wraps filters and aggregations in the required `nested` queries transparently.
+
 ## Error responses
 
 | Status | Condition                                   |

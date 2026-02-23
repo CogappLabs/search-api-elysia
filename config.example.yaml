@@ -37,7 +37,7 @@ indexes:
         - period
       highlight: true
       # suggestField: title  # Required for phrase suggestions (ES 7+ removed _all)
-    # fields:                # Unified field config: weight, searchable, esField
+    # fields:                # Unified field config: weight, searchable, field
     #   title:
     #     weight: 10         # Boost weight (implies searchable)
     #   description:
@@ -45,11 +45,14 @@ indexes:
     #   body:
     #     searchable: true   # Searchable without boost
     #   country:
-    #     esField: placeCountry  # Alias → real ES field name
+    #     field: placeCountry  # Alias → real ES field name
     #   region:
-    #     esField: placeRegion
+    #     field: placeRegion
     #   coords:
-    #     esField: placeCoordinates
+    #     field: placeCoordinates
+    #   facilityType:
+    #     field: facilities.type
+    #     nestedPath: facilities  # ES nested type — wraps filters/aggs automatically
 
   catalogue:
     engine: elasticsearch

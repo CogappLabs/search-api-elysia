@@ -25,6 +25,7 @@ export declare abstract class ElasticCompatEngine implements SearchEngine {
     protected client: ElasticCompatClient;
     protected indexName: string;
     protected suggestField: string | undefined;
+    protected nestedPaths: Map<string, string>;
     private mappingCache;
     constructor(config: IndexConfig, client?: ElasticCompatClient);
     /** Create the engine-specific client instance. */
@@ -33,6 +34,7 @@ export declare abstract class ElasticCompatEngine implements SearchEngine {
     protected abstract extractBody<T>(response: unknown): T;
     /** Check if an error represents a 404 (different shapes per client). */
     protected abstract isNotFoundError(err: unknown): boolean;
+    private wrapNestedIfNeeded;
     search(query: string, options: SearchOptions): Promise<SearchResult>;
     getDocument(id: string): Promise<Record<string, unknown> | null>;
     getMapping(): Promise<Record<string, unknown>>;

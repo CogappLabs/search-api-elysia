@@ -22,9 +22,9 @@ indexes:
       description:
         weight: 2
       country:
-        esField: placeCountry
+        field: placeCountry
       region:
-        esField: placeRegion
+        field: placeRegion
 
   local-es:
     engine: elasticsearch
@@ -43,9 +43,15 @@ indexes:
       description:
         weight: 2
       country:
-        esField: placeCountry
+        field: placeCountry
       region:
-        esField: placeRegion
+        field: placeRegion
+      facilityType:
+        field: facilities.type
+        nestedPath: facilities
+      facilityName:
+        field: facilities.name.keyword
+        nestedPath: facilities
 
   local-opensearch:
     engine: opensearch
@@ -64,9 +70,15 @@ indexes:
       description:
         weight: 2
       country:
-        esField: placeCountry
+        field: placeCountry
       region:
-        esField: placeRegion
+        field: placeRegion
+      facilityType:
+        field: facilities.type
+        nestedPath: facilities
+      facilityName:
+        field: facilities.name.keyword
+        nestedPath: facilities
 
   local-meilisearch:
     engine: meilisearch
@@ -78,6 +90,15 @@ indexes:
       facets:
         - placeCountry
         - placeRegion
+    fields:
+      country:
+        field: placeCountry
+      region:
+        field: placeRegion
+      facilityType:
+        field: facilities.type
+      facilityName:
+        field: facilities.name
 
   local-typesense:
     engine: typesense
@@ -91,3 +112,12 @@ indexes:
       facets:
         - placeCountry
         - placeRegion
+    fields:
+      country:
+        field: placeCountry
+      region:
+        field: placeRegion
+      facilityType:
+        field: facilities.type
+      facilityName:
+        field: facilities.name

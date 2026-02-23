@@ -68,7 +68,8 @@ export interface FacetSearchOptions {
 export interface FieldConfig {
     weight?: number;
     searchable?: boolean;
-    esField?: string;
+    field?: string;
+    nestedPath?: string;
 }
 export interface IndexDefaults {
     perPage?: number;

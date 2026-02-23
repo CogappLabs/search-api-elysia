@@ -9,17 +9,17 @@ export function deriveFromFields(fields?: Record<string, FieldConfig>) {
 
   const seenEsFields = new Map<string, string>();
   for (const [name, cfg] of Object.entries(fields)) {
-    const esName = cfg.esField ?? name;
+    const esName = cfg.field ?? name;
 
-    if (cfg.esField) {
-      const existing = seenEsFields.get(cfg.esField);
+    if (cfg.field) {
+      const existing = seenEsFields.get(cfg.field);
       if (existing) {
         throw new Error(
-          `Fields "${existing}" and "${name}" both map to ES field "${cfg.esField}"`,
+          `Fields "${existing}" and "${name}" both map to ES field "${cfg.field}"`,
         );
       }
-      seenEsFields.set(cfg.esField, name);
-      aliases[name] = cfg.esField;
+      seenEsFields.set(cfg.field, name);
+      aliases[name] = cfg.field;
     }
 
     if (cfg.weight !== undefined) {

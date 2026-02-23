@@ -7,7 +7,7 @@ Field aliases let you expose consumer-friendly field names in the API while keep
 
 ## Configuration
 
-Define aliases using the `esField` property in the `fields` config for each index:
+Define aliases using the `field` property in the `fields` config for each index:
 
 ```yaml
 indexes:
@@ -17,11 +17,11 @@ indexes:
     indexName: museum_collections
     fields:
       country:
-        esField: placeCountry
+        field: placeCountry
       region:
-        esField: placeRegion
+        field: placeRegion
       coords:
-        esField: placeCoordinates
+        field: placeCoordinates
 ```
 
 With this config, API consumers use `country` and the API translates it to `placeCountry` for Elasticsearch.
@@ -31,7 +31,7 @@ Aliases can be combined with other field properties (`weight`, `searchable`):
 ```yaml
 fields:
   country:
-    esField: placeCountry
+    field: placeCountry
     weight: 5
 ```
 
@@ -63,7 +63,7 @@ Elasticsearch field names are translated back to aliases in:
 ## Passthrough behavior
 
 - Fields that are not aliases pass through unchanged in both directions
-- When no `fields` with `esField` are configured for an index, the alias map has zero overhead — no translation is performed
+- When no `fields` with `field` are configured for an index, the alias map has zero overhead — no translation is performed
 - Real ES field names can still be used alongside aliases (they pass through as-is)
 
 ## Examples

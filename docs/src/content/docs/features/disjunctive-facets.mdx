@@ -1,0 +1,85 @@
+---
+title: Disjunctive Facets
+description: How to implement OR-mode facet filtering where selecting a value doesn't reduce its own facet counts.
+---
+
+## Conjunctive vs disjunctive facets
+
+**Conjunctive** (AND) facets reduce counts in every facet, including their own. Selecting "Painting" in a `category` facet hides all other category counts — you only see "Painting (42)".
+
+**Disjunctive** (OR) facets keep the filtered facet's own counts independent. Selecting "Painting" still shows "Sculpture (18), Drawing (7)" etc., so users can add more values. Other facets (e.g. `period`) are still filtered to show only results matching "Painting".
+
+Most search UIs want disjunctive facets — selecting a category value should show what else is available in that category.
+
+## How the search endpoint handles it
+
+The search API automatically provides disjunctive counts when filters overlap with requested facets. Internally it uses:
+
+1. **`post_filter`** — Facet filters are moved out of the main query and applied as a post-filter. This means aggregations run on the unfiltered result set.
+2. **Per-facet filter wrapping** — Each facet's aggregation is wrapped with all _other_ facet filters, but excludes its own. This gives each facet independent counts while still respecting cross-facet constraints.
+
+This happens automatically when you pass both `facets` and `filters` on the same field:
+
+```bash
+# category filter overlaps category facet → disjunctive counts
+curl "/:handle/search?q=&facets=[\"category\",\"period\"]&filters={\"category\":\"Painting\"}"
+```
+
+The response will include:
+- **Hits** filtered to only "Painting" results
+- **`category` facet** with counts for all categories (not just "Painting")
+- **`period` facet** with counts filtered to "Painting" results
+
+## Using the facets endpoint for OR-mode
+
+For typeahead facet UIs, use the [`/:handle/facets/:field`](../../reference/facets/) endpoint. To get disjunctive counts, exclude the current field from the `filters` parameter:
+
+```bash
+# Get category values, scoped to period=modern but NOT filtered by category
+curl "/:handle/facets/category?filters={\"period\":\"modern\"}"
+
+# Get period values, scoped to category=Painting but NOT filtered by period
+curl "/:handle/facets/period?filters={\"category\":\"Painting\"}"
+```
+
+The rule: pass all active filters _except_ the field you're fetching values for. This gives you independent counts for that field.
+
+## InstantSearch
+
+When using the [InstantSearch adapter](../instantsearch/), disjunctive facets work automatically. InstantSearch sends OR-mode facet filters as nested arrays in `facetFilters`:
+
+```json
+{
+  "facetFilters": [
+    ["category:Painting", "category:Sculpture"],
+    "period:modern"
+  ]
+}
+```
+
+Inner arrays are OR groups (disjunctive), outer items are ANDed. The adapter translates this to array filter values, and the engine handles the rest.
+
+## Frontend pattern
+
+When building a custom UI (not InstantSearch), implement disjunctive facets by managing which filters are sent with each request:
+
+```js
+const activeFilters = { category: ["Painting", "Sculpture"], period: "modern" };
+
+// Search request — send all filters, get disjunctive counts automatically
+const searchResults = await fetch(`/:handle/search?q=&facets=["category","period"]&filters=${
+  JSON.stringify(activeFilters)
+}`);
+
+// Facet typeahead — exclude current field from filters
+async function getFacetValues(field, query) {
+  const otherFilters = Object.fromEntries(
+    Object.entries(activeFilters).filter(([key]) => key !== field)
+  );
+  const params = new URLSearchParams({ q: query });
+  if (Object.keys(otherFilters).length > 0) {
+    params.set("filters", JSON.stringify(otherFilters));
+  }
+  return fetch(`/:handle/facets/${field}?${params}`);
+}
+```
