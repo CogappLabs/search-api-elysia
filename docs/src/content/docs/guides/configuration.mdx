@@ -161,14 +161,14 @@ indexes:
 | ------------ | --------- | --------------------------------------------------------------------------- |
 | `weight`     | `number?` | Boost weight for relevance scoring. Implies the field is searchable.        |
 | `searchable` | `boolean?`| Include in search queries without boosting. Only applies when `weight` is not set. |
-| `field`    | `string?` | Maps this key as a consumer-friendly alias to the real field name. Despite the name, works with all engines — aliasing operates at the API route layer before reaching the engine. |
+| `field`    | `string?` | Maps this key as a consumer-friendly alias to the real field name. Works with all engines — aliasing operates at the API route layer before reaching the engine. |
 | `nestedPath` | `string?` | Elasticsearch nested path for fields inside nested object arrays. When set, aggregations and filters are automatically wrapped in `nested` queries. Only used by ES/OpenSearch. |
 
 ### How field properties interact
 
 - **`weight`** — The field gets a boost multiplier in relevance scoring. This implicitly makes it searchable; you don't need to also set `searchable: true`.
 - **`searchable: true`** (without `weight`) — The field is included in search queries at default relevance. Useful for fields you want to search but don't want to boost.
-- **`field`** — The key acts as an alias. API consumers use the alias; the API translates to the real ES field name automatically and bidirectionally.
+- **`field`** — The key acts as an alias. API consumers use the alias; the API translates to the real field name automatically and bidirectionally.
 - **No `fields` config** — All fields are searched with default relevance (equivalent to `["*"]`).
 
 ### Nested fields via `nestedPath`
